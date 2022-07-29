@@ -1,33 +1,33 @@
+use std::path::PathBuf;
+
 use serde::{Deserialize, Serialize};
 
-use figment::{Figment, Provider, Error, Metadata, Profile};
+use figment::{Error, Figment, Metadata, Profile, Provider};
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
-struct Config {
-    pub files: Vec<String>,
+pub struct Config {
+    pub files: Vec<PathBuf>,
 }
 
 impl Default for Config {
     fn default() -> Self {
-        Config {
-            files: vec![],
-        }
+        Config { files: vec![] }
     }
 }
 
 impl Config {
-    fn from<T: Provider>(provider: T) -> Result<Config, Error> {
+    pub fn from<T: Provider>(provider: T) -> Result<Config, Error> {
         Figment::from(provider).extract()
     }
 
-    fn figment() -> Figment {
-        use figment::providers::Env;
+    pub fn figment() -> Figment {
+        use figment::providers::{Format, Toml};
 
-        Figment::from(Config::default()).merge(Env::prefixed("BOMPER_"))
+        Figment::from(Config::default()).merge(Toml::file("bomp.toml"))
     }
 }
 
-use figment::value::{Map, Dict};
+use figment::value::{Dict, Map};
 
 impl Provider for Config {
     fn metadata(&self) -> Metadata {

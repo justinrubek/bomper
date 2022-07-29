@@ -8,3 +8,5 @@ name = "bomper"
 path = "src/main.rs"
 
 [dependencies]
+figment = { version = "0.10.6", features = ["toml", "env"] }
+serde = { version = "1.0.140", features = ["derive"] }

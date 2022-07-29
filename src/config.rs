@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use figment::{Figment, Provider, Error, Metadata, Profile};
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
-struct Config {
+pub struct Config {
     pub files: Vec<String>,
 }
 
@@ -16,11 +16,11 @@ impl Default for Config {
 }
 
 impl Config {
-    fn from<T: Provider>(provider: T) -> Result<Config, Error> {
+    pub fn from<T: Provider>(provider: T) -> Result<Config, Error> {
         Figment::from(provider).extract()
     }
 
-    fn figment() -> Figment {
+    pub fn figment() -> Figment {
         use figment::providers::Env;
 
         Figment::from(Config::default()).merge(Env::prefixed("BOMPER_"))

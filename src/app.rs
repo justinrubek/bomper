@@ -4,6 +4,8 @@ use rayon::prelude::*;
 use bomper::config::Config;
 use bomper::file::overwrite_file;
 
+use crate::cli::Args;
+
 pub struct App {
     pub config: Config,
     pub figment: Figment,
@@ -24,9 +26,11 @@ impl App {
 }
 
 impl App {
-    pub fn run(&self) {
+    pub fn run(&self, args: &Args) -> Result<(), Error> {
         self.config.files.par_iter().for_each(|file| {
-            overwrite_file(file, "0.1.0", "0.2.0");
+            overwrite_file(file, &args.old_version, &args.new_version);
         });
+
+        Ok(())
     }
 }

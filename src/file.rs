@@ -12,9 +12,7 @@ pub fn overwrite_file(path: &Path, old_content: &str, new_content: &str) -> Resu
 
     // Replace occurences of old_content with new_content in source_map.
     let search_text = regex::escape(old_content);
-    println!("search_text: {}", search_text);
     let regex = regex::bytes::RegexBuilder::new(&search_text).build()?;
-    println!("regex: {}", regex);
     let replaced = replace(&regex, &source_map, data);
 
     let temp_file = tempfile::NamedTempFile::new_in(

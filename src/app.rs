@@ -1,6 +1,8 @@
 use figment::{Error, Figment, Provider};
+use rayon::prelude::*;
 
 use bomper::config::Config;
+use bomper::file::overwrite_file;
 
 pub struct App {
     pub config: Config,
@@ -18,5 +20,13 @@ impl App {
             config: Config::from(&figment)?,
             figment,
         })
+    }
+}
+
+impl App {
+    pub fn run(&self) {
+        self.config.files.par_iter().for_each(|file| {
+            overwrite_file(file, "0.1.0", "0.2.0");
+        });
     }
 }

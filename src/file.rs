@@ -1,9 +1,15 @@
 use memmap::{Mmap, MmapMut};
-use std::{fs, fs::File, io::prelude::*, path::Path, ops::DerefMut};
+use std::{fs, fs::File, io::prelude::*, path::{Path, PathBuf}, ops::DerefMut};
 
 use crate::error::{Error, Result};
 
-pub fn overwrite_file(path: &Path, old_content: &str, new_content: &str) -> Result<()> {
+pub struct FileReplacer {
+    pub path: PathBuf,
+    pub temp_file: tempfile::NamedTempFile,
+
+}
+
+pub fn overwrite_file(path: &Path, old_content: &str, new_content: &str) -> Result<FileReplacer> {
     let source_file = File::open(path)?;
     let source_meta = fs::metadata(path)?;
     let source_map  = unsafe { Mmap::map(&source_file)? };
@@ -32,9 +38,10 @@ pub fn overwrite_file(path: &Path, old_content: &str, new_content: &str) -> Resu
     drop(source_map);
     drop(source_file);
 
-    temp_file.persist(fs::canonicalize(path)?)?;
-
-    Ok(())
+    Ok(FileReplacer {
+        path: path.to_path_buf(),
+        temp_file,
+    })
 }
 
 fn replace<'a>(

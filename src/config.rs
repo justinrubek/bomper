@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
@@ -6,12 +7,12 @@ use figment::{Error, Figment, Metadata, Profile, Provider};
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct Config {
-    pub files: Vec<PathBuf>,
+    pub files: HashSet<PathBuf>,
 }
 
 impl Default for Config {
     fn default() -> Self {
-        Config { files: vec![] }
+        Config { files: HashSet::new() }
     }
 }
 

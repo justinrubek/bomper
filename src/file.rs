@@ -23,8 +23,8 @@ pub fn overwrite_file(path: &Path, old_content: &str, new_content: &str) -> Resu
     file.set_len(replaced.len() as u64)?;
     file.set_permissions(source_meta.permissions())?;
 
-    if replaced.is_empty() == false {
-        let mut target_map = unsafe { MmapMut::map_mut(&file)? };
+    if !replaced.is_empty() {
+        let mut target_map = unsafe { MmapMut::map_mut(file)? };
         target_map.deref_mut().write_all(&replaced)?;
         target_map.flush_async()?;
     }
@@ -42,5 +42,5 @@ fn replace<'a>(
     buf: &'a [u8],
     replace_with: Vec<u8>,
 ) -> std::borrow::Cow<'a, [u8]> {
-    regex.replacen(&buf, 0, &*replace_with)
+    regex.replacen(buf, 0, &*replace_with)
 }

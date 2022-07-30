@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.0 - 2022-07-30
+#### Features
+- file changes are only applied when all operations succeed - (8a2e53d) - Justin Rubek
+
+- - -
+
 ## 0.2.0 - 2022-07-30
 #### Continuous Integration
 - add bomp.toml - (a9f69a6) - Justin Rubek

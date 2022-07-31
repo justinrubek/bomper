@@ -21,8 +21,3 @@ jobs:
           tag_name: ${{ github.ref }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
-
-  publish-crates:
-    uses: rrval/workflows/.github/workflows/rust_publish.yml@v1.0.0
-    secrets:
-        CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}

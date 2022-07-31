@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.0 - 2022-07-31
+#### Features
+- added bomp_files function to handle overwriting multiple files - (4910158) - Justin Rubek
+#### Refactoring
+- made overwrite_file accept and consume a PathBuf - (970286e) - Justin Rubek
+
+- - -
+
 ## 0.3.0 - 2022-07-30
 #### Features
 - file changes are only applied when all operations succeed - (8a2e53d) - Justin Rubek

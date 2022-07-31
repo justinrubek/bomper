@@ -8,4 +8,4 @@ To use this, enter a dev shell: `nix develop` .
 The provided shell will include the software needed to develop on the project
 and will configure git pre commit hooks.
 
-[https://github.com/cocogitto/cocogitto](Cocogitto) is included to generate a CHANGELOG.md based on commit messages.
+[Cocogitto](https://github.com/cocogitto/cocogitto) is included to generate a CHANGELOG.md based on commit messages.

@@ -2,6 +2,20 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.5 - 2022-07-31
+#### Bug Fixes
+- **(cargo)** removed semicolon - (0e1be23) - Justin Rubek
+#### Continuous Integration
+- **(actions)** added publish-crate workflow with manual steps - (116a204) - Justin Rubek
+- **(actions)** removed publish-crates workflow job - (bd63a9e) - Justin Rubek
+- **(cog.toml)** added pre_bump_hook to run bomper - (c87a17c) - Justin Rubek
+#### Documentation
+- **(cargo)** added fields for crates.io - (5be620d) - Justin Rubek
+#### Miscellaneous Chores
+- **(license)** renamed to not be a markdown file - (7fb00a4) - Justin Rubek
+
+- - -
+
 ## 0.4.4 - 2022-07-31
 #### Continuous Integration
 - made crates.io release action a different step - (22d383f) - Justin Rubek

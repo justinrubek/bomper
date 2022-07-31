@@ -1,9 +1,0 @@
-name: publish
-on:
-    release:
-        types: [published]
-jobs:
-    crate:
-        uses: rrval/workflows/.github/workflows/rust_publish.yml@v1.0.0
-        secrets:
-            CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}

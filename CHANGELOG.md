@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.1 - 2022-07-31
+#### Continuous Integration
+- added GitHub actions for publishing releases to crates.io - (6dc27eb) - Justin Rubek
+- added Cargo.lock and removed incorrect .gitignore value - (b7abe5a) - Justin Rubek
+#### Documentation
+- updated README.md with information on nix and the features provided by the default devShell - (9dfca5b) - Justin Rubek
+- fixed link to Cocogitto in README.md - (8af4f7e) - Justin Rubek
+
+- - -
+
 ## 0.4.0 - 2022-07-31
 #### Features
 - added bomp_files function to handle overwriting multiple files - (4910158) - Justin Rubek

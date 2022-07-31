@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.2 - 2022-07-31
+#### Continuous Integration
+- **(actions)** made GitHub release occur across 2 steps - (5e3bd29) - Justin Rubek
+
+- - -
+
 ## 0.4.1 - 2022-07-31
 #### Continuous Integration
 - added GitHub actions for publishing releases to crates.io - (6dc27eb) - Justin Rubek

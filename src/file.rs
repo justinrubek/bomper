@@ -52,3 +52,21 @@ fn replace<'a>(
 ) -> std::borrow::Cow<'a, [u8]> {
     regex.replacen(buf, 0, &*replace_with)
 }
+
+pub fn bomp_files(mut files: HashSet<PathBuf>, old_content: &str, new_content: &str) -> Result<()> {
+    let r: Result<Vec<_>, _> = files.par_drain().map(|file| {
+        overwrite_file(file, old_content, new_content)
+    }).collect();
+
+    // Only persist the changes if all operations succeed
+    match r {
+        Err(e) => Err(e),
+        Ok(files) => {
+            for replacer in files {
+                replacer.temp_file.persist(fs::canonicalize(replacer.path)?)?;
+            }
+
+            Ok(())
+        }
+    }
+}

@@ -4,7 +4,7 @@ on:
     tags:
       - "*"
 jobs:
-  publish:
+  publish-github:
     runs-on: ubuntu-latest
     steps:
       - name: Determine version
@@ -22,6 +22,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
-      - uses: rrval/workflows/.github/workflows/rust_publish.yml@v1.0.0
-        secrets:
-            CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+  publish-crates:
+    uses: rrval/workflows/.github/workflows/rust_publish.yml@v1.0.0
+    secrets:
+        CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}

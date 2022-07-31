@@ -1,4 +1,5 @@
 files = [ 
     "Cargo.toml",
+    "Cargo.lock",
     "flake.nix",
 ]

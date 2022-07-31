@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.4 - 2022-07-31
+#### Continuous Integration
+- made crates.io release action a different step - (22d383f) - Justin Rubek
+
+- - -
+
 ## 0.4.3 - 2022-07-31
 #### Continuous Integration
 - **(actions)** consolidated actions into tag.yml - (7ecfb4a) - Justin Rubek

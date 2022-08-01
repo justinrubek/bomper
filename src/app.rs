@@ -1,7 +1,7 @@
 use figment::{Error as FigmentError, Figment, Provider};
 
 use bomper::config::Config;
-use bomper::file::bomp_files;
+use bomper::replacers::simple::bomp_files;
 use bomper::error::Result;
 
 use crate::cli::Args;

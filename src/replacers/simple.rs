@@ -3,12 +3,7 @@ use rayon::prelude::*;
 use std::{fs, fs::File, io::prelude::*, path::PathBuf, ops::DerefMut, collections::HashSet};
 
 use crate::error::{Error, Result};
-
-pub struct FileReplacer {
-    pub path: PathBuf,
-    pub temp_file: tempfile::NamedTempFile,
-
-}
+use super::file::FileReplacer;
 
 pub fn overwrite_file(path: PathBuf, old_content: &str, new_content: &str) -> Result<FileReplacer> {
     let source_file = File::open(&path)?;

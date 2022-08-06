@@ -10,6 +10,7 @@ pub struct FileReplacer {
 }
 
 impl FileReplacer {
+    /// Persists the pending changes to the file, overwriting its contents
     pub fn persist(self) -> Result<()> {
         let path = fs::canonicalize(&self.path)?;
         self.temp_file.persist(path)?;

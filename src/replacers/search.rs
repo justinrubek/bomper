@@ -3,6 +3,7 @@ use rayon::prelude::*;
 use std::{fs, fs::File, io::prelude::*, path::PathBuf, ops::DerefMut, collections::HashSet};
 use std::ops::Range;
 
+use crate::replacers::Replacer;
 use crate::error::{Error, Result};
 use super::file::FileReplacer;
 
@@ -126,9 +127,12 @@ impl SearchReplacer {
         })
     }
     
+}
+
+impl Replacer for SearchReplacer {
     /// Replaces all instances of the old_content with the new_content in the file.
     /// Returns a FileReplacer object that can be used to replace the file by persisting the changes.
-    pub fn overwrite_file(&self) -> Result<FileReplacer> {
+    fn overwrite_file(&self) -> Result<Option<FileReplacer>> {
         let source_file = File::open(&self.path)?;
         let source_meta = fs::metadata(&self.path)?;
         let source_buf  = unsafe { Mmap::map(&source_file)? };
@@ -138,11 +142,11 @@ impl SearchReplacer {
             &source_buf,
             offsets,
             source_meta.permissions(),
-        );
+        )?;
 
         drop(source_buf);
         drop(source_file);
 
-        replacers
+        Ok(Some(replacers))
     }
 }

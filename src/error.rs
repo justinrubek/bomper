@@ -8,6 +8,8 @@ pub enum Error {
     InvalidPath(std::path::PathBuf),
     #[error("failed to replace file with tempfile: {0}")]
     TempFilePersist(#[from] tempfile::PersistError),
+    #[error(transparent)]
+    Other(#[from] anyhow::Error),
 }
 
 impl std::fmt::Debug for Error {

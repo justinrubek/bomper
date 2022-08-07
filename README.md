@@ -26,3 +26,4 @@ The provided shell will include the dependencies needed for development.
 - [Cocogitto](https://github.com/cocogitto/cocogitto) is included to generate a CHANGELOG.md based on commit messages
 - [pre-commit-hooks.nix](https://github.com/cachix/pre-commit-hooks.nix) are configured to enforce code formatting
     - [rustfmt](https://github.com/rust-lang/rustfmt) is included to allow using the `cargo fmt` command
+- [bomper](https://github.com/justinrubek/bomper) is used to update hardcoded version strings in files during `cog bump`

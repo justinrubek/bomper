@@ -1,7 +1,7 @@
 ignore_merge_commits = false
 branch_whitelist = []
 pre_bump_hooks = [
-    "nix run .#cli -- {{latest}} {{version}}"
+    "bomper {{latest}} {{version}}"
 ]
 post_bump_hooks = []
 

@@ -1,5 +1,6 @@
-files = [ 
-    "Cargo.toml",
-    "Cargo.lock",
-    "flake.nix",
-]
+[file."Cargo.toml"]
+
+[file."Cargo.lock"]
+
+[file."flake.nix"]
+search_value = "bomper"

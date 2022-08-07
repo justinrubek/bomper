@@ -7,5 +7,5 @@ pub mod search;
 use file::FileReplacer;
 
 pub trait Replacer {
-    fn overwrite_file(&self) -> Result<Option<FileReplacer>>;
+    fn overwrite_file(self) -> Result<Option<FileReplacer>>;
 }

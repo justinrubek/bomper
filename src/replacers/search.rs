@@ -20,13 +20,14 @@ pub struct SearchReplacer {
 impl SearchReplacer {
     pub fn new(
         path: PathBuf,
-        old_content: String,
-        verification_regex: regex::bytes::Regex,
-        new_content: String
+        old_content: &str,
+        verification_regex: &str,
+        new_content: &str
     ) -> Result<Self> {
-        let search_text = regex::escape(&old_content);
+        let search_text = regex::escape(old_content);
         let expr = format!("((.*(\\n)){{2}}).*({})", &search_text);
         let regex = regex::bytes::RegexBuilder::new(&expr).build()?;
+        let verification_regex = regex::bytes::Regex::new(verification_regex)?;
 
         Ok(Self {
             path,
@@ -71,7 +72,7 @@ impl SearchReplacer {
     }
 
     fn get_replacement(
-        &self,
+        self,
         source_buf: &Mmap,
         replacement_locations: Vec<Range<usize>>,
         file_permissions: std::fs::Permissions,
@@ -122,7 +123,7 @@ impl SearchReplacer {
         file.flush()?;
 
         Ok(FileReplacer {
-            path: self.path.clone(),
+            path: self.path,
             temp_file,
         })
     }
@@ -132,7 +133,7 @@ impl SearchReplacer {
 impl Replacer for SearchReplacer {
     /// Replaces all instances of the old_content with the new_content in the file.
     /// Returns a FileReplacer object that can be used to replace the file by persisting the changes.
-    fn overwrite_file(&self) -> Result<Option<FileReplacer>> {
+    fn overwrite_file(self) -> Result<Option<FileReplacer>> {
         let source_file = File::open(&self.path)?;
         let source_meta = fs::metadata(&self.path)?;
         let source_buf  = unsafe { Mmap::map(&source_file)? };

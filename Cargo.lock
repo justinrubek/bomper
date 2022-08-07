@@ -62,6 +62,7 @@ dependencies = [
  "serde",
  "tempfile",
  "thiserror",
+ "toml",
 ]
 
 [[package]]

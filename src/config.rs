@@ -1,39 +1,26 @@
-use std::collections::HashSet;
-use std::path::PathBuf;
-
+use anyhow::anyhow;
+use std::{path::{Path, PathBuf}, collections::{HashSet, HashMap}};
 use serde::{Deserialize, Serialize};
+use toml::value::{Table, Value};
 
-use figment::{Error, Figment, Metadata, Profile, Provider};
+use crate::error::Result;
 
-#[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct FileTableData {
+    pub search_value: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Config {
-    pub files: HashSet<PathBuf>,
+    pub file: HashMap<PathBuf, FileTableData>
 }
 
 impl Config {
-    pub fn from<T: Provider>(provider: T) -> Result<Config, Error> {
-        Figment::from(provider).extract()
-    }
+    pub fn from_file(path: &impl AsRef<Path>) -> Result<Config> {
+        let file = std::fs::read_to_string(path)?;
+        let value: Config = toml::from_str(&file)?;
 
-    pub fn figment() -> Figment {
-        use figment::providers::{Format, Toml};
-
-        Figment::from(Config::default()).merge(Toml::file("bomp.toml"))
-    }
-}
-
-use figment::value::{Dict, Map};
-
-impl Provider for Config {
-    fn metadata(&self) -> Metadata {
-        Metadata::named("bomper config")
-    }
-
-    fn data(&self) -> Result<Map<Profile, Dict>, Error> {
-        figment::providers::Serialized::defaults(Config::default()).data()
-    }
-
-    fn profile(&self) -> Option<Profile> {
-        None
+        Ok(value)
     }
 }

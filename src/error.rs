@@ -9,6 +9,8 @@ pub enum Error {
     #[error("failed to replace file with tempfile: {0}")]
     TempFilePersist(#[from] tempfile::PersistError),
     #[error(transparent)]
+    TomlDeserialize(#[from] toml::de::Error),
+    #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
 

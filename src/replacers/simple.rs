@@ -1,9 +1,9 @@
 use memmap::{Mmap, MmapMut};
 use rayon::prelude::*;
-use std::{fs, fs::File, io::prelude::*, path::PathBuf, ops::DerefMut, collections::HashSet};
+use std::{collections::HashSet, fs, fs::File, io::prelude::*, ops::DerefMut, path::PathBuf};
 
-use crate::error::{Error, Result};
 use super::{file::FileReplacer, Replacer};
+use crate::error::{Error, Result};
 
 pub struct SimpleReplacer {
     path: PathBuf,
@@ -12,11 +12,7 @@ pub struct SimpleReplacer {
 }
 
 impl SimpleReplacer {
-    pub fn new(
-        path: PathBuf,
-        old_content: &str,
-        new_content: &str,
-    ) -> Result<Self> {
+    pub fn new(path: PathBuf, old_content: &str, new_content: &str) -> Result<Self> {
         let search_text = regex::escape(old_content);
         let regex = regex::bytes::RegexBuilder::new(&search_text).build()?;
 
@@ -32,14 +28,15 @@ impl Replacer for SimpleReplacer {
     fn overwrite_file(self) -> Result<Option<FileReplacer>> {
         let source_file = File::open(&self.path)?;
         let source_meta = fs::metadata(&self.path)?;
-        let source_map  = unsafe { Mmap::map(&source_file)? };
+        let source_map = unsafe { Mmap::map(&source_file)? };
 
         // Replace occurences of old_content with new_content in source_map.
         let replaced = replace(&self.regex, &source_map, self.new_data);
 
         let temp_file = tempfile::NamedTempFile::new_in(
-            (&self.path).parent()
-            .ok_or_else(|| Error::InvalidPath((&self.path).to_path_buf()))?,
+            (&self.path)
+                .parent()
+                .ok_or_else(|| Error::InvalidPath((&self.path).to_path_buf()))?,
         )?;
         let file = temp_file.as_file();
         file.set_len(replaced.len() as u64)?;

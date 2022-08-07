@@ -1,11 +1,11 @@
 use memmap::{Mmap, MmapMut};
 use rayon::prelude::*;
-use std::{fs, fs::File, io::prelude::*, path::PathBuf, ops::DerefMut, collections::HashSet};
 use std::ops::Range;
+use std::{collections::HashSet, fs, fs::File, io::prelude::*, ops::DerefMut, path::PathBuf};
 
-use crate::replacers::Replacer;
-use crate::error::{Error, Result};
 use super::file::FileReplacer;
+use crate::error::{Error, Result};
+use crate::replacers::Replacer;
 
 /// Replaces all instances of a given value with a new one.
 /// This is a somewhat naive implementation, but it works.
@@ -22,7 +22,7 @@ impl SearchReplacer {
         path: PathBuf,
         old_content: &str,
         verification_regex: &str,
-        new_content: &str
+        new_content: &str,
     ) -> Result<Self> {
         let search_text = regex::escape(old_content);
         let expr = format!("((.*(\\n)){{2}}).*({})", &search_text);
@@ -40,35 +40,37 @@ impl SearchReplacer {
     /// Gives the positions in the buffer that need to be replaced.
     fn determine_replacement_locations(&self, source_buf: &Mmap) -> Result<Vec<Range<usize>>> {
         // Find all locations in the file with the version string found
-        self.regex.captures_iter(source_buf).map(|capture| {
-            // Ensure that there is a match of the verification regex before replacing
-            let first_capture = capture.get(1).unwrap();
-            let result = self.verification_regex.find(&first_capture.as_bytes());
-            match result {
-                None => {
-                    return Ok(None);
-                },
-                _ => {},
-            }
+        self.regex
+            .captures_iter(source_buf)
+            .map(|capture| {
+                // Ensure that there is a match of the verification regex before replacing
+                let first_capture = capture.get(1).unwrap();
+                let result = self.verification_regex.find(&first_capture.as_bytes());
+                match result {
+                    None => {
+                        return Ok(None);
+                    }
+                    _ => {}
+                }
 
-            // Record the offsets of the portion that is to be replaced
-            let last_capture = capture.get(capture.len() - 1);
-            if let Some(mtch) = last_capture {
-                Ok(Some(Range {
-                    start: mtch.start(),
-                    end: mtch.end(),
-                }))
-            } else {
-                Ok(None)
-            }
-        })
-        // Filter out any that are None
-        .filter_map(|val| match val {
-            Ok(Some(val)) => Some(Ok(val)),
-            Ok(None) => None,
-            Err(err) => Some(Err(err)),
-        })
-        .collect::<Result<Vec<_>>>()
+                // Record the offsets of the portion that is to be replaced
+                let last_capture = capture.get(capture.len() - 1);
+                if let Some(mtch) = last_capture {
+                    Ok(Some(Range {
+                        start: mtch.start(),
+                        end: mtch.end(),
+                    }))
+                } else {
+                    Ok(None)
+                }
+            })
+            // Filter out any that are None
+            .filter_map(|val| match val {
+                Ok(Some(val)) => Some(Ok(val)),
+                Ok(None) => None,
+                Err(err) => Some(Err(err)),
+            })
+            .collect::<Result<Vec<_>>>()
     }
 
     fn get_replacement(
@@ -78,15 +80,16 @@ impl SearchReplacer {
         file_permissions: std::fs::Permissions,
     ) -> Result<FileReplacer> {
         let temp_file = tempfile::NamedTempFile::new_in(
-            (&self.path).parent()
-            .ok_or_else(|| Error::InvalidPath((&self.path).to_path_buf()))?,
+            (&self.path)
+                .parent()
+                .ok_or_else(|| Error::InvalidPath((&self.path).to_path_buf()))?,
         )?;
         let mut file = temp_file.as_file();
 
         // resize the file to the size of the old one
-        let replacers_removal_len = replacement_locations.iter().fold(0, |acc, val| {
-            acc + val.end - val.start
-        });
+        let replacers_removal_len = replacement_locations
+            .iter()
+            .fold(0, |acc, val| acc + val.end - val.start);
         let new_value_len = self.new_data.len() * replacement_locations.len();
         let file_len = source_buf.len() - replacers_removal_len + new_value_len;
         file.set_len(file_len as u64)?;
@@ -104,7 +107,7 @@ impl SearchReplacer {
                 writer.write_all(&source_buf[0..start])?;
                 writer.write_all(&self.new_data)?;
                 writer.write_all(&source_buf[end..])?;
-            },
+            }
             val if val > 1 => {
                 let mut writer = target_map.deref_mut();
                 let mut prev_end = 0;
@@ -115,8 +118,7 @@ impl SearchReplacer {
                     writer.write_all(&self.new_data)?;
                     prev_end = end;
                 }
-
-            },
+            }
             _ => unimplemented!(),
         }
 
@@ -127,7 +129,6 @@ impl SearchReplacer {
             temp_file,
         })
     }
-    
 }
 
 impl Replacer for SearchReplacer {
@@ -136,14 +137,10 @@ impl Replacer for SearchReplacer {
     fn overwrite_file(self) -> Result<Option<FileReplacer>> {
         let source_file = File::open(&self.path)?;
         let source_meta = fs::metadata(&self.path)?;
-        let source_buf  = unsafe { Mmap::map(&source_file)? };
+        let source_buf = unsafe { Mmap::map(&source_file)? };
 
         let offsets = self.determine_replacement_locations(&source_buf)?;
-        let replacers = self.get_replacement(
-            &source_buf,
-            offsets,
-            source_meta.permissions(),
-        )?;
+        let replacers = self.get_replacement(&source_buf, offsets, source_meta.permissions())?;
 
         drop(source_buf);
         drop(source_file);

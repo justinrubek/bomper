@@ -1,10 +1,12 @@
 use anyhow::anyhow;
-use std::{path::{Path, PathBuf}, collections::{HashSet, HashMap}};
 use serde::{Deserialize, Serialize};
+use std::{
+    collections::{HashMap, HashSet},
+    path::{Path, PathBuf},
+};
 use toml::value::{Table, Value};
 
 use crate::error::Result;
-
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct FileTableData {
@@ -13,7 +15,7 @@ pub struct FileTableData {
 
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Config {
-    pub file: HashMap<PathBuf, FileTableData>
+    pub file: HashMap<PathBuf, FileTableData>,
 }
 
 impl Config {

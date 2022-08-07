@@ -1,8 +1,8 @@
 use crate::error::Result;
 
 pub mod file;
-pub mod simple;
 pub mod search;
+pub mod simple;
 
 use file::FileReplacer;
 

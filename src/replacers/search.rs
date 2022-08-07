@@ -114,6 +114,8 @@ impl SearchReplacer {
                     writer.write_all(&self.new_data)?;
                     prev_end = end;
                 }
+
+                writer.write_all(&source_buf[prev_end..])?;
             }
             _ => unimplemented!(),
         }

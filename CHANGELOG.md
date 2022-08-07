@@ -2,6 +2,27 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.5.0 - 2022-08-07
+#### Build system
+- **(bomp.toml)** add Cargo.lock - (a402743) - Justin Rubek
+#### Continuous Integration
+- **(Cargo.lock)** update bomper version - (5d7dd93) - Justin Rubek
+#### Documentation
+- **(readme)** added basic description of bomper and uses - (3e25b3c) - Justin Rubek
+- describe persist function - (0701bb9) - Justin Rubek
+#### Features
+- **(bomp.toml)** switched file format to support search and simple replacement - (43182b9) - Justin Rubek
+- Added error type for anyhow - (3e27945) - Justin Rubek
+- Replacer trait - (d56c711) - Justin Rubek
+- SearchReplacer - replaces matched strings only when a verification regex finds a match - (56d38ab) - Justin Rubek
+- persist impl for FileReplacer which automatically persists that file - (d7446a2) - Justin Rubek
+#### Refactoring
+- move file replacement logic into replacers submodule - (83c1d47) - Justin Rubek
+#### Style
+- cargo fmt - (5e81c23) - Justin Rubek
+
+- - -
+
 ## 0.4.5 - 2022-07-31
 #### Bug Fixes
 - **(cargo)** removed semicolon - (0e1be23) - Justin Rubek

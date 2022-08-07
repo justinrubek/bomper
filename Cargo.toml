@@ -1,6 +1,6 @@
 [package]
 name = "bomper"
-version = "0.4.5"
+version = "0.5.0"
 edition = "2021"
 license = "MIT"
 description = "bumps versions in files"

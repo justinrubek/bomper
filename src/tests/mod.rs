@@ -135,6 +135,8 @@ dependencies = [
  "tracing-subscriber",
 ]"#
             );
+        } else {
+            panic!("replacer is not generated");
         }
 
         Ok(())

@@ -11,6 +11,9 @@ This can then be combined with a separate tool, such as a [pre bump hook](https:
 
 Run the command with the args `--help` to view the instructions.
 
+See bomper's `cog.toml` and `bomper.toml` for a working example of bomper in use.
+When running `cog bump` bomper is invoked which updates the files as part of the version bump commit.
+
 ## Contributing
 
 The main dependency for working on this project is nix.

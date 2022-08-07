@@ -1,11 +1,7 @@
-use anyhow::anyhow;
-use figment::{Error as FigmentError, Figment, Provider};
 use rayon::prelude::*;
-use std::fs;
-use std::io::Read;
 
 use bomper::config::Config;
-use bomper::error::{Error, Result};
+use bomper::error::Result;
 use bomper::replacers::file::FileReplacer;
 use bomper::replacers::search::SearchReplacer;
 use bomper::replacers::simple::SimpleReplacer;

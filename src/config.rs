@@ -1,10 +1,8 @@
-use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     path::{Path, PathBuf},
 };
-use toml::value::{Table, Value};
 
 use crate::error::Result;
 

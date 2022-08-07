@@ -1,7 +1,6 @@
 use memmap::{Mmap, MmapMut};
-use rayon::prelude::*;
 use std::ops::Range;
-use std::{collections::HashSet, fs, fs::File, io::prelude::*, ops::DerefMut, path::PathBuf};
+use std::{fs, fs::File, io::prelude::*, ops::DerefMut, path::PathBuf};
 
 use super::file::FileReplacer;
 use crate::error::{Error, Result};
@@ -45,12 +44,9 @@ impl SearchReplacer {
             .map(|capture| {
                 // Ensure that there is a match of the verification regex before replacing
                 let first_capture = capture.get(1).unwrap();
-                let result = self.verification_regex.find(&first_capture.as_bytes());
-                match result {
-                    None => {
-                        return Ok(None);
-                    }
-                    _ => {}
+                let result = self.verification_regex.find(first_capture.as_bytes());
+                if result == None {
+                    return Ok(None);
                 }
 
                 // Record the offsets of the portion that is to be replaced

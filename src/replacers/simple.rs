@@ -1,6 +1,5 @@
 use memmap::{Mmap, MmapMut};
-use rayon::prelude::*;
-use std::{collections::HashSet, fs, fs::File, io::prelude::*, ops::DerefMut, path::PathBuf};
+use std::{fs, fs::File, io::prelude::*, ops::DerefMut, path::PathBuf};
 
 use super::{file::FileReplacer, Replacer};
 use crate::error::{Error, Result};

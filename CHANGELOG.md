@@ -2,6 +2,24 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.5.1 - 2022-08-07
+#### Bug Fixes
+- SearchReplacer now writes end of segment when there are multiple replacements in a single file - (0c8b410) - Justin Rubek
+#### Build system
+- **(flake.nix)** refactor to use flake-parts - (c93af18) - Justin Rubek
+- update dependency to bomper - (78c93a4) - Justin Rubek
+- self-reference flake as dependency for bumping version - (7767bc2) - Justin Rubek
+#### Continuous Integration
+- **(bomp.toml)** added search checking to all files - (d8ce155) - Justin Rubek
+#### Documentation
+- **(readme)** explain that bomper uses itself for - (4472b31) - Justin Rubek
+#### Style
+- clippy - (151c4a4) - Justin Rubek
+#### Tests
+- Added FileJail and tested SearchReplacer - (6276ed6) - Justin Rubek
+
+- - -
+
 ## 0.5.0 - 2022-08-07
 #### Build system
 - **(bomp.toml)** add Cargo.lock - (a402743) - Justin Rubek

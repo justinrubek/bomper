@@ -61,7 +61,7 @@
         rust = opkgs.rust-bin.stable.latest.default;
         rustPackage = pkgs.rustPlatform.buildRustPackage {
           pname = "bomper";
-          version = "0.5.0";
+          version = "0.5.1";
 
           src = gitignoreSource ./.;
           cargoLock = {

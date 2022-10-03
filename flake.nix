@@ -8,15 +8,15 @@
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    crane = {
+      url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
-    gitignore = {
-      url = "github:hercules-ci/gitignore.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     bomper = {
       url = "github:justinrubek/bomper";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -28,8 +28,8 @@
     nixpkgs,
     flake-utils,
     flake-parts,
-    gitignore,
-    rust-overlay,
+    crane,
+    fenix,
     pre-commit-hooks,
     bomper,
     ...
@@ -41,34 +41,39 @@
         inputs',
         pkgs,
         system,
+        lib,
         ...
       }: let
-        inherit (gitignore.lib) gitignoreSource;
-        pre-commit-check = pre-commit-hooks.lib.${system}.run {
-          src = gitignoreSource ./.;
-          hooks = {
-            alejandra.enable = true;
-            rustfmt.enable = true;
+        craneLib = crane.lib.${system};
+        common-build-args = rec {
+          src = lib.cleanSourceWith {
+            src = ./.;
           };
-        };
-
-        opkgs = import nixpkgs {
-          inherit system;
-          overlays = [
-            rust-overlay.overlays.default
-          ];
-        };
-        rust = opkgs.rust-bin.stable.latest.default;
-        rustPackage = pkgs.rustPlatform.buildRustPackage {
           pname = "bomper";
-          version = "0.5.1";
-
-          src = gitignoreSource ./.;
-          cargoLock = {
-            lockFile = ./Cargo.lock;
-          };
-          nativeBuildInputs = [rust];
         };
+        deps-only = craneLib.buildDepsOnly ({
+          pname = "bomper";
+        } // common-build-args);
+
+        clippy-check = craneLib.cargoClippy ({
+          cargoArtifacts = deps-only;
+          cargoClippyExtraArgs = "--all-features -- --deny warnings";
+        } // common-build-args);
+
+        tests-check = craneLib.cargoNextest ({
+          cargoArtifacts = deps-only;
+          partitions = 1;
+          partitionType = "count";
+        } // common-build-args);
+
+        rustPackage = craneLib.buildPackage ({
+          pname = "bomper-cli";
+          cargoArtifacts = deps-only;
+          cargoExtraArgs = "--bin bomper";
+          
+        } // common-build-args);
+
+        rust-environment = inputs'.fenix.packages.latest.toolchain;
 
         bomper-cli = bomper.packages.${system}.cli;
       in rec {
@@ -78,8 +83,7 @@
         };
         devShells = {
           default = pkgs.mkShell rec {
-            buildInputs = with pkgs; [rust rustfmt cocogitto bomper-cli];
-            inherit (pre-commit-check) shellHook;
+            buildInputs = [rust-environment pkgs.rustfmt pkgs.cocogitto bomper-cli];
           };
         };
         apps = {

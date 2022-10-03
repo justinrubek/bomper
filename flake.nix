@@ -52,26 +52,29 @@
           pname = "bomper";
         };
         deps-only = craneLib.buildDepsOnly ({
-          pname = "bomper";
-        } // common-build-args);
+            pname = "bomper";
+          }
+          // common-build-args);
 
         clippy-check = craneLib.cargoClippy ({
-          cargoArtifacts = deps-only;
-          cargoClippyExtraArgs = "--all-features -- --deny warnings";
-        } // common-build-args);
+            cargoArtifacts = deps-only;
+            cargoClippyExtraArgs = "--all-features -- --deny warnings";
+          }
+          // common-build-args);
 
         tests-check = craneLib.cargoNextest ({
-          cargoArtifacts = deps-only;
-          partitions = 1;
-          partitionType = "count";
-        } // common-build-args);
+            cargoArtifacts = deps-only;
+            partitions = 1;
+            partitionType = "count";
+          }
+          // common-build-args);
 
         rustPackage = craneLib.buildPackage ({
-          pname = "bomper-cli";
-          cargoArtifacts = deps-only;
-          cargoExtraArgs = "--bin bomper";
-          
-        } // common-build-args);
+            pname = "bomper-cli";
+            cargoArtifacts = deps-only;
+            cargoExtraArgs = "--bin bomper";
+          }
+          // common-build-args);
 
         rust-environment = inputs'.fenix.packages.latest.toolchain;
 
@@ -83,7 +86,7 @@
         };
         devShells = {
           default = pkgs.mkShell rec {
-            buildInputs = [rust-environment pkgs.rustfmt pkgs.cocogitto bomper-cli];
+            buildInputs = [rust-environment pkgs.rustfmt pkgs.cocogitto bomper-cli pkgs.alejandra];
           };
         };
         apps = {

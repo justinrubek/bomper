@@ -93,6 +93,10 @@
           };
           default = apps.cli;
         };
+        checks = {
+          build-cli = self.packages.cli;
+          inherit clippy-check tests-check;
+        };
       };
       systems = flake-utils.lib.defaultSystems;
     };

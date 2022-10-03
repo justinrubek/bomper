@@ -94,7 +94,7 @@
           default = apps.cli;
         };
         checks = {
-          build-cli = self.packages.cli;
+          build-cli = self.packages.bomper-cli;
           inherit clippy-check tests-check;
         };
       };

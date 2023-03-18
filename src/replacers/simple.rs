@@ -24,7 +24,9 @@ impl SimpleReplacer {
 }
 
 impl Replacer for SimpleReplacer {
-    fn overwrite_file(self) -> Result<Option<FileReplacer>> {
+    fn determine_replacements(self) -> Result<Option<Vec<FileReplacer>>> {
+        let mut replacers = Vec::new();
+
         let source_file = File::open(&self.path)?;
         let source_meta = fs::metadata(&self.path)?;
         let source_map = unsafe { Mmap::map(&source_file)? };
@@ -50,10 +52,12 @@ impl Replacer for SimpleReplacer {
         drop(source_map);
         drop(source_file);
 
-        Ok(Some(FileReplacer {
+        replacers.push(FileReplacer {
             path: self.path,
             temp_file,
-        }))
+        });
+
+        Ok(Some(replacers))
     }
 }
 

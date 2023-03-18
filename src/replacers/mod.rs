@@ -8,7 +8,7 @@ pub mod simple;
 use file::FileReplacer;
 
 pub trait Replacer {
-    fn overwrite_file(self) -> Result<Option<FileReplacer>>;
+    fn determine_replacements(self) -> Result<Option<Vec<FileReplacer>>>;
 }
 
 pub struct VersionReplacement {

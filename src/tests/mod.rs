@@ -104,9 +104,11 @@ dependencies = [
             "package1|package2",
             "0.2.0",
         )?
-        .overwrite_file()?;
+        .determine_replacements()?;
 
         if let Some(mut replacer) = replacer {
+            let mut replacer = replacer.pop().unwrap();
+
             let mut replaced_value = String::new();
             replacer.temp_file.read_to_string(&mut replaced_value)?;
             assert_eq!(

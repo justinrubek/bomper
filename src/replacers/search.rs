@@ -134,16 +134,20 @@ impl SearchReplacer {
 impl Replacer for SearchReplacer {
     /// Replaces all instances of the old_content with the new_content in the file.
     /// Returns a FileReplacer object that can be used to replace the file by persisting the changes.
-    fn overwrite_file(self) -> Result<Option<FileReplacer>> {
+    fn determine_replacements(self) -> Result<Option<Vec<FileReplacer>>> {
+        let mut replacers = Vec::new();
+
         let source_file = File::open(&self.path)?;
         let source_meta = fs::metadata(&self.path)?;
         let source_buf = unsafe { Mmap::map(&source_file)? };
 
         let offsets = self.determine_replacement_locations(&source_buf)?;
-        let replacers = self.get_replacement(&source_buf, offsets, source_meta.permissions())?;
+        let replacer = self.get_replacement(&source_buf, offsets, source_meta.permissions())?;
 
         drop(source_buf);
         drop(source_file);
+
+        replacers.push(replacer);
 
         Ok(Some(replacers))
     }

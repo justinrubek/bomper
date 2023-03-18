@@ -15,7 +15,7 @@ pub struct FileTableData {
 pub struct Config {
     pub by_file: Option<HashMap<PathBuf, FileTableData>>,
     #[serde(default)]
-    pub cargo_lock: Option<CargoLockReplaceMode>,
+    pub cargo: Option<CargoReplaceMode>,
 }
 
 impl Config {
@@ -30,7 +30,7 @@ impl Config {
 /// Reads from the Cargo.lock file to determine which packages to bump versions for.
 /// This is more reliable than a simple regex because it matches the exact package names only
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum CargoLockReplaceMode {
+pub enum CargoReplaceMode {
     /// automatically determine package names from the Cargo workspace
     Autodetect,
     /// Manually specify package names

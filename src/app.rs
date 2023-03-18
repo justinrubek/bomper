@@ -1,4 +1,4 @@
-use bomper::replacers::cargo::CargoLockReplacer;
+use bomper::replacers::cargo::CargoReplacer;
 
 use bomper::config::Config;
 use bomper::error::Result;
@@ -32,26 +32,29 @@ impl App {
         let by_file = &self.config.by_file;
         if let Some(by_file) = by_file {
             for (path, config) in by_file {
-                let replacer = match &config.search_value {
+                let mut replacers = match &config.search_value {
                     Some(value) => {
                         SearchReplacer::new(path.clone(), &args.old_version, value, &args.new_version)?
-                            .overwrite_file()?
+                            .determine_replacements()?
                     }
                     None => SimpleReplacer::new(path.clone(), &args.old_version, &args.new_version)?
-                        .overwrite_file()?,
+                        .determine_replacements()?,
                 };
 
-                if let Some(replacer) = replacer {
-                    files_to_replace.push(replacer);
+                // append new replacers to the list
+                if let Some(replacers) = &mut replacers {
+                    files_to_replace.append(replacers);
                 }
             }
         }
 
-        let cargo_lock = &self.config.cargo_lock;
+        let cargo_lock = &self.config.cargo;
         if let Some(cargo_lock) = cargo_lock {
-            let replacer = CargoLockReplacer::new(versions, cargo_lock.clone())?;
-            let file = replacer.overwrite_file()?.expect("Cargo.lock replacer failed");
-            files_to_replace.push(file);
+            let replacer = CargoReplacer::new(versions, cargo_lock.clone())?;
+            let mut files = replacer.determine_replacements()?;
+            if let Some(files) = &mut files {
+                files_to_replace.append(files);
+            }
         }
 
         if args.dry_run {
@@ -60,6 +63,10 @@ impl App {
                 println!("Would have replaced: {}", replacer.path.display());
 
                 println!("{:#?}", replacer);
+
+                // wait for user input
+                // let mut input = String::new();
+                // std::io::stdin().read_line(&mut input)?;
             }
 
             return Ok(());

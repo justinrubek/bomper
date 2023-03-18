@@ -17,12 +17,18 @@ pub enum Error {
     #[error(transparent)]
     CargoLock(#[from] cargo_lock::Error),
     #[error(transparent)]
+    CargoToml(#[from] cargo_toml::Error),
+    #[error(transparent)]
     SemverParse(#[from] semver::Error),
     #[error(transparent)]
     Other(#[from] anyhow::Error),
+    #[error("invalid version: {0}")]
+    TomlSerialize(#[from] toml::ser::Error),
 
     #[error("invalid replacement count: {0}")]
     InvalidReplacementCount(usize),
+    #[error("invalid cargo.toml: {0}")]
+    InvalidCargoToml(cargo_metadata::camino::Utf8PathBuf),
     
 }
 

@@ -2,6 +2,39 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [0.6.0](https://github.com/justinrubek/bomper/compare/0.5.1..0.6.0) - 2023-03-18
+#### Bug Fixes
+- **(nix)** Properly refer to name of package for check - ([d4d41de](https://github.com/justinrubek/bomper/commit/d4d41debf1c84f90d87469b22148fa46a8bbce34)) - [@justinrubek](https://github.com/justinrubek)
+- **(nix)** Properly refer to name of package for chheck - ([dd66d14](https://github.com/justinrubek/bomper/commit/dd66d147e048f078fc9de649385ca9add08a557e)) - [@justinrubek](https://github.com/justinrubek)
+- disable dry-run by default - ([dfcf09e](https://github.com/justinrubek/bomper/commit/dfcf09ec727163c3734ee985cedac61a9557a4ac)) - [@justinrubek](https://github.com/justinrubek)
+#### Build system
+- **(nix)** add flake checks - ([6f4299a](https://github.com/justinrubek/bomper/commit/6f4299adbe683271a9fdbd1be032982b13e35684)) - [@justinrubek](https://github.com/justinrubek)
+- **(nix)** use crane for building rust packages - ([420c54c](https://github.com/justinrubek/bomper/commit/420c54c9e86eeabe36975286e5ad4a789d8e01e4)) - [@justinrubek](https://github.com/justinrubek)
+- update bomper dependency - ([277364b](https://github.com/justinrubek/bomper/commit/277364bc7dfcd604a1aa56c9b5f76095ef934c58)) - [@justinrubek](https://github.com/justinrubek)
+- update bomper dependency - ([d453357](https://github.com/justinrubek/bomper/commit/d45335752a8f2c7181d18fba2614ad767de639b4)) - [@justinrubek](https://github.com/justinrubek)
+#### Documentation
+- **(example)** add examples - ([e87dc92](https://github.com/justinrubek/bomper/commit/e87dc9218688039e70a28f3c57595cd4c1cb9202)) - [@justinrubek](https://github.com/justinrubek)
+- **(readme)** clarify examples - ([0e8f45a](https://github.com/justinrubek/bomper/commit/0e8f45a2eef404d4464473332d1f5e0036b85593)) - [@justinrubek](https://github.com/justinrubek)
+#### Features
+- Cargo.toml updating - ([464ff42](https://github.com/justinrubek/bomper/commit/464ff42992ee8ad79c3cdb2b825131688f024e1f)) - [@justinrubek](https://github.com/justinrubek)
+- Autodetect cargo workspace packages - ([96590cb](https://github.com/justinrubek/bomper/commit/96590cbbcc6842c1063209ea6d92b9d10de27de7)) - [@justinrubek](https://github.com/justinrubek)
+- Cargo.lock editing - ([4f97982](https://github.com/justinrubek/bomper/commit/4f97982d6ffeed03f643387c9cf86aa435ae9c8e)) - [@justinrubek](https://github.com/justinrubek)
+- display program information: version, author, and about - ([0bceca7](https://github.com/justinrubek/bomper/commit/0bceca7067191cce6abe8ecea7033a9050996e12)) - [@justinrubek](https://github.com/justinrubek)
+#### Miscellaneous Chores
+- **(nix)** Update flake structure - ([2f8004f](https://github.com/justinrubek/bomper/commit/2f8004f82ca0bfeedcfc8654fbe243a2ba5851e3)) - [@justinrubek](https://github.com/justinrubek)
+- **(nix/devShell)** add direnv - ([c97b23c](https://github.com/justinrubek/bomper/commit/c97b23c94591c40d4dfb7644d5a7a1695ca5902e)) - [@justinrubek](https://github.com/justinrubek)
+- **(nix/devShell)** add bacon - ([243031b](https://github.com/justinrubek/bomper/commit/243031b91789e2f7e4012f2c26b61631ef4434a9)) - [@justinrubek](https://github.com/justinrubek)
+- remove needless waiting for input - ([0594e65](https://github.com/justinrubek/bomper/commit/0594e65b84e41ce12eefbd6a4817dfdf17a7d0b3)) - [@justinrubek](https://github.com/justinrubek)
+- update cog changelog format - ([adf3689](https://github.com/justinrubek/bomper/commit/adf3689080570c21d80fe66bbbae54c468998439)) - [@justinrubek](https://github.com/justinrubek)
+#### Style
+- **(nix)** format with alejandra - ([520a41c](https://github.com/justinrubek/bomper/commit/520a41cfacda4b0e6b6e23466bfdb50d64f012e7)) - [@justinrubek](https://github.com/justinrubek)
+- cargo fmt - ([d2c10b1](https://github.com/justinrubek/bomper/commit/d2c10b17d073c39f6b2ed97d059f76fe1ce8a9b2)) - [@justinrubek](https://github.com/justinrubek)
+#### Tests
+- test cargo replacement - ([7312f0a](https://github.com/justinrubek/bomper/commit/7312f0ade1d1337ef5d1d8fd635671411923a798)) - [@justinrubek](https://github.com/justinrubek)
+- dual_replace test fails when SearchReplacer causes no overwriting - ([7dab549](https://github.com/justinrubek/bomper/commit/7dab549e23fb3f3c8d113593b395b75e4b9c3408)) - [@justinrubek](https://github.com/justinrubek)
+
+- - -
+
 ## 0.5.1 - 2022-08-07
 #### Bug Fixes
 - SearchReplacer now writes end of segment when there are multiple replacements in a single file - (0c8b410) - Justin Rubek

@@ -1,31 +1,51 @@
 [package]
 name = "bomper"
-version = "0.5.1"
 edition = "2021"
-license = "MIT"
+version = "0.6.0"
 description = "bumps versions in files"
 homepage = "https://github.com/justinrubek/bomper"
-repository = "https://github.com/justinrubek/bomper"
 readme = "README.md"
-
-[[bin]]
-name = "bomper"
-path = "src/main.rs"
+license = "MIT"
+repository = "https://github.com/justinrubek/bomper"
 
 [dependencies]
 anyhow = "1.0.59"
 cargo-lock = "8.0.3"
 cargo_metadata = "0.15.3"
 cargo_toml = "0.15.2"
-clap = { version = "3.2.16", features = ["derive"] }
-figment = { version = "0.10.6", features = ["toml", "env"] }
 memmap = "0.7.0"
 parking_lot = "0.12.1"
 rayon = "1.5.3"
 regex = "1.6.0"
 ron = "0.8.0"
-semver = { version = "1.0.17", features = ["serde"] }
-serde = { version = "1.0.140", features = ["derive"] }
 tempfile = "3.3.0"
 thiserror = "1.0.31"
 toml = "0.7.3"
+
+[dependencies.clap]
+version = "3.2.16"
+features = ["derive"]
+
+[dependencies.figment]
+version = "0.10.6"
+features = ["toml", "env"]
+
+[dependencies.semver]
+version = "1.0.17"
+features = ["serde"]
+
+[dependencies.serde]
+version = "1.0.140"
+features = ["derive"]
+
+[lib]
+path = "src/lib.rs"
+name = "bomper"
+edition = "2021"
+crate-type = ["rlib"]
+required-features = []
+
+[[bin]]
+path = "src/main.rs"
+name = "bomper"
+required-features = []

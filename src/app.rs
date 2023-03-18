@@ -66,12 +66,6 @@ impl App {
             println!("Dry run, not persisting changes");
             for replacer in files_to_replace {
                 println!("Would have replaced: {}", replacer.path.display());
-
-                println!("{:#?}", replacer);
-
-                // wait for user input
-                let mut input = String::new();
-                std::io::stdin().read_line(&mut input)?;
             }
 
             return Ok(());

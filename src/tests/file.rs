@@ -53,6 +53,11 @@ impl FileJail {
             )));
         }
 
+        // Create the parent directory if it doesn't exist
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(self.directory().join(parent))?;
+        }
+
         let file = File::create(self.directory().join(path))?;
         let mut writer = BufWriter::new(file);
         writer.write_all(contents.as_bytes())?;

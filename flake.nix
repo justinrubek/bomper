@@ -4,10 +4,8 @@
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    flake-parts = {
-      url = "github:hercules-ci/flake-parts";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    nix-filter.url = "github:numtide/nix-filter";
+    flake-parts.url = "github:hercules-ci/flake-parts";
     fenix = {
       url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -23,93 +21,15 @@
     };
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    flake-utils,
-    flake-parts,
-    crane,
-    fenix,
-    pre-commit-hooks,
-    bomper,
-    ...
-  }:
-    flake-parts.lib.mkFlake {inherit self;} {
-      perSystem = {
-        config,
-        self',
-        inputs',
-        pkgs,
-        system,
-        lib,
-        ...
-      }: let
-        craneLib = crane.lib.${system};
-        common-build-args = rec {
-          src = lib.cleanSourceWith {
-            src = ./.;
-          };
-          pname = "bomper";
-        };
-        deps-only = craneLib.buildDepsOnly ({
-            pname = "bomper";
-          }
-          // common-build-args);
+  outputs = inputs:
+    inputs.flake-parts.lib.mkFlake {inherit inputs;} {
+      systems = ["x86_64-linux" "aarch64-linux"];
+      imports = [
+        inputs.pre-commit-hooks.flakeModule
 
-        clippy-check = craneLib.cargoClippy ({
-            cargoArtifacts = deps-only;
-            cargoClippyExtraArgs = "--all-features -- --deny warnings";
-          }
-          // common-build-args);
-
-        tests-check = craneLib.cargoNextest ({
-            cargoArtifacts = deps-only;
-            partitions = 1;
-            partitionType = "count";
-          }
-          // common-build-args);
-
-        rustPackage = craneLib.buildPackage ({
-            pname = "bomper-cli";
-            cargoArtifacts = deps-only;
-            cargoExtraArgs = "--bin bomper";
-          }
-          // common-build-args);
-
-        rust-environment = inputs'.fenix.packages.latest.toolchain;
-
-        bomper-cli = bomper.packages.${system}.cli;
-      in rec {
-        packages = {
-          cli = rustPackage;
-          default = packages.cli;
-        };
-        devShells = {
-          default = pkgs.mkShell rec {
-            buildInputs = [
-              rust-environment 
-              pkgs.alejandra
-              pkgs.rustfmt 
-
-              pkgs.cocogitto 
-              pkgs.bacon
-
-              bomper-cli
-            ];
-          };
-        };
-        apps = {
-          cli = {
-            type = "app";
-            program = "${packages.cli}/bin/bomper";
-          };
-          default = apps.cli;
-        };
-        checks = {
-          build-cli = packages.cli;
-          inherit clippy-check tests-check;
-        };
-      };
-      systems = flake-utils.lib.defaultSystems;
+        ./flake-parts/cargo.nix
+        ./flake-parts/rust-toolchain.nix
+        ./flake-parts/pre-commit.nix
+      ];
     };
 }

@@ -65,8 +65,8 @@ impl App {
                 println!("{:#?}", replacer);
 
                 // wait for user input
-                // let mut input = String::new();
-                // std::io::stdin().read_line(&mut input)?;
+                let mut input = String::new();
+                std::io::stdin().read_line(&mut input)?;
             }
 
             return Ok(());

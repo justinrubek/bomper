@@ -29,7 +29,6 @@ pub enum Error {
     InvalidReplacementCount(usize),
     #[error("invalid cargo.toml: {0}")]
     InvalidCargoToml(cargo_metadata::camino::Utf8PathBuf),
-    
 }
 
 impl std::fmt::Debug for Error {

@@ -1,7 +1,7 @@
 use std::{io::prelude::*, path::PathBuf, str::FromStr};
 
-use super::VersionReplacement;
 use super::file::FileReplacer;
+use super::VersionReplacement;
 use crate::config::CargoReplaceMode;
 use crate::error::{Error, Result};
 use crate::replacers::Replacer;
@@ -16,10 +16,7 @@ pub struct CargoReplacer {
 }
 
 impl CargoReplacer {
-    pub fn new(
-        versions: VersionReplacement,
-        replace_mode: CargoReplaceMode,
-    ) -> Result<Self> {
+    pub fn new(versions: VersionReplacement, replace_mode: CargoReplaceMode) -> Result<Self> {
         Ok(Self {
             // TODO: This may need to be specified, or detected
             path: PathBuf::from("Cargo.lock"),
@@ -50,7 +47,7 @@ impl Replacer for CargoReplacer {
             .iter()
             .map(|package| package.name.as_str().to_string())
             .collect::<Vec<String>>();
-        
+
         // update cargo.lock with new versions of packages
         lockfile.packages.iter_mut().for_each(|package| {
             let package_name = package.name.as_str().to_string();

@@ -33,12 +33,17 @@ impl App {
         if let Some(by_file) = by_file {
             for (path, config) in by_file {
                 let mut replacers = match &config.search_value {
-                    Some(value) => {
-                        SearchReplacer::new(path.clone(), &args.old_version, value, &args.new_version)?
+                    Some(value) => SearchReplacer::new(
+                        path.clone(),
+                        &args.old_version,
+                        value,
+                        &args.new_version,
+                    )?
+                    .determine_replacements()?,
+                    None => {
+                        SimpleReplacer::new(path.clone(), &args.old_version, &args.new_version)?
                             .determine_replacements()?
                     }
-                    None => SimpleReplacer::new(path.clone(), &args.old_version, &args.new_version)?
-                        .determine_replacements()?,
                 };
 
                 // append new replacers to the list
@@ -75,7 +80,6 @@ impl App {
                 replacer.persist()?;
             }
         }
-
 
         Ok(())
     }

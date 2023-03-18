@@ -36,9 +36,3 @@ pub enum CargoLockReplaceMode {
     /// Manually specify package names
     Packages(Vec<String>),
 }
-
-impl Default for CargoLockReplaceMode {
-    fn default() -> Self {
-        CargoLockReplaceMode::Autodetect
-    }
-}

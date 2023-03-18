@@ -11,6 +11,10 @@ pub enum Error {
     #[error(transparent)]
     RonDeserialize(#[from] ron::de::SpannedError),
     #[error(transparent)]
+    Utf8(#[from] std::string::FromUtf8Error),
+    #[error(transparent)]
+    CargoMetadata(#[from] cargo_metadata::Error),
+    #[error(transparent)]
     CargoLock(#[from] cargo_lock::Error),
     #[error(transparent)]
     SemverParse(#[from] semver::Error),

@@ -37,11 +37,8 @@ impl Replacer for CargoLockReplacer {
         let mut lockfile = cargo_lock::Lockfile::load(&self.path)?;
 
         let package_names = match &self.replace_mode {
-            CargoLockReplaceMode::Autodetect => {
-                // TODO: Determine the names of all packages in the cargo workspace
-                todo!()
-            }
-            CargoLockReplaceMode::Packages(packages) => packages,
+            CargoLockReplaceMode::Autodetect => list_cargo_workspace()?,
+            CargoLockReplaceMode::Packages(packages) => packages.to_vec(),
         };
 
         let new_version = cargo_lock::Version::from_str(&self.versions.new_version)?;
@@ -71,4 +68,21 @@ impl Replacer for CargoLockReplacer {
             temp_file,
         }))
     }
+}
+
+/// Returns the names of all packages in the cargo workspace
+/// This is only the packages that are defined in the local workspace, and not the dependencies
+fn list_cargo_workspace() -> Result<Vec<String>> {
+    let mut metadata_cmd = cargo_metadata::MetadataCommand::new();
+    metadata_cmd.features(cargo_metadata::CargoOpt::AllFeatures);
+    metadata_cmd.no_deps();
+
+    let metadata = metadata_cmd.exec()?;
+
+    let package_names = metadata.packages
+        .iter()
+        .map(|package| package.name.clone())
+        .collect::<Vec<String>>();
+
+    Ok(package_names)
 }

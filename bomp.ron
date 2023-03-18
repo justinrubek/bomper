@@ -1,5 +1,6 @@
 (
-    cargo_lock: Some(Packages(["bomper"])),
+    // cargo_lock: Some(Packages(["bomper"])),
+    cargo_lock: Some(Autodetect),
     by_file: Some({
        "Cargo.toml": ( search_value: Some("bomper") ),
     }),

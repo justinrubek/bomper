@@ -15,6 +15,7 @@ path = "src/main.rs"
 [dependencies]
 anyhow = "1.0.59"
 cargo-lock = "8.0.3"
+cargo_metadata = "0.15.3"
 clap = { version = "3.2.16", features = ["derive"] }
 figment = { version = "0.10.6", features = ["toml", "env"] }
 memmap = "0.7.0"

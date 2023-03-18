@@ -12,13 +12,17 @@ use crate::{
 fn config_simple() {
     FileJail::expect_with(|jail| {
         jail.create_file(
-            "bomp.toml",
-            r#"
-            [file."Cargo.toml"]
+            "bomp.ron",
+            r#"(
+                by_file: Some({
+                   "Cargo.toml": ( search_value: None, ),
+                }),
+            )
         "#,
         )?;
-        let config = Config::from_file(&String::from("bomp.toml"))?;
-        let info: Option<&FileTableData> = config.file.get(Path::new("Cargo.toml"));
+        let config = Config::from_ron(&String::from("bomp.ron"))?;
+        let by_file = config.by_file.unwrap();
+        let info: Option<&FileTableData> = by_file.get(Path::new("Cargo.toml"));
 
         if let Some(info) = info {
             assert_eq!(info.search_value, None);
@@ -34,15 +38,18 @@ fn config_simple() {
 fn config_search() {
     FileJail::expect_with(|jail| {
         jail.create_file(
-            "bomp.toml",
-            r#"
-            [file."Cargo.toml"]
-            search_value = "bomper"
+            "bomp.ron",
+            r#"(
+                by_file: Some({
+                   "Cargo.toml": ( search_value: Some("bomper"), ),
+                }),
+            )
         "#,
         )?;
 
-        let config = Config::from_file(&String::from("bomp.toml"))?;
-        let info: Option<&FileTableData> = config.file.get(Path::new("Cargo.toml"));
+        let config = Config::from_ron(&String::from("bomp.ron"))?;
+        let by_file = config.by_file.unwrap();
+        let info: Option<&FileTableData> = by_file.get(Path::new("Cargo.toml"));
 
         if let Some(info) = info {
             assert_eq!(info.search_value, Some(String::from("bomper")));

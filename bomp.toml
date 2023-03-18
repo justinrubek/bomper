@@ -1,8 +1,0 @@
-[file."Cargo.toml"]
-search_value = "bomper"
-
-[file."Cargo.lock"]
-search_value = "bomper"
-
-[file."flake.nix"]
-search_value = "bomper"

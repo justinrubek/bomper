@@ -33,9 +33,9 @@ impl Replacer for SimpleReplacer {
         let replaced = replace(&self.regex, &source_map, self.new_data);
 
         let temp_file = tempfile::NamedTempFile::new_in(
-            (&self.path)
+            (self.path)
                 .parent()
-                .ok_or_else(|| Error::InvalidPath((&self.path).to_path_buf()))?,
+                .ok_or_else(|| Error::InvalidPath((self.path).to_path_buf()))?,
         )?;
         let file = temp_file.as_file();
         file.set_len(replaced.len() as u64)?;

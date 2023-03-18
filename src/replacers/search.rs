@@ -45,7 +45,7 @@ impl SearchReplacer {
                 // Ensure that there is a match of the verification regex before replacing
                 let first_capture = capture.get(1).unwrap();
                 let result = self.verification_regex.find(first_capture.as_bytes());
-                if result == None {
+                if result.is_none() {
                     return Ok(None);
                 }
 
@@ -76,9 +76,9 @@ impl SearchReplacer {
         file_permissions: std::fs::Permissions,
     ) -> Result<FileReplacer> {
         let temp_file = tempfile::NamedTempFile::new_in(
-            (&self.path)
+            (self.path)
                 .parent()
-                .ok_or_else(|| Error::InvalidPath((&self.path).to_path_buf()))?,
+                .ok_or_else(|| Error::InvalidPath((self.path).to_path_buf()))?,
         )?;
         let mut file = temp_file.as_file();
 
@@ -117,7 +117,9 @@ impl SearchReplacer {
 
                 writer.write_all(&source_buf[prev_end..])?;
             }
-            _ => unimplemented!(),
+            val => {
+                return Err(Error::InvalidReplacementCount(val));
+            }
         }
 
         file.flush()?;

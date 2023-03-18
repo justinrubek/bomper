@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use crate::error::Result;
 
 /// A replacer that contains a temporary file and a path it may be persisted to
+#[derive(Debug)]
 pub struct FileReplacer {
     pub path: PathBuf,
     pub temp_file: tempfile::NamedTempFile,

@@ -9,9 +9,17 @@ pub enum Error {
     #[error("failed to replace file with tempfile: {0}")]
     TempFilePersist(#[from] tempfile::PersistError),
     #[error(transparent)]
-    TomlDeserialize(#[from] toml::de::Error),
+    RonDeserialize(#[from] ron::de::SpannedError),
+    #[error(transparent)]
+    CargoLock(#[from] cargo_lock::Error),
+    #[error(transparent)]
+    SemverParse(#[from] semver::Error),
     #[error(transparent)]
     Other(#[from] anyhow::Error),
+
+    #[error("invalid replacement count: {0}")]
+    InvalidReplacementCount(usize),
+    
 }
 
 impl std::fmt::Debug for Error {

@@ -1,0 +1,6 @@
+(
+    cargo_lock: Some(Packages(["bomper"])),
+    by_file: Some({
+       "Cargo.toml": ( search_value: Some("bomper") ),
+    }),
+)

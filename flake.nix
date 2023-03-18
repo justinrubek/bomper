@@ -86,7 +86,16 @@
         };
         devShells = {
           default = pkgs.mkShell rec {
-            buildInputs = [rust-environment pkgs.rustfmt pkgs.cocogitto bomper-cli pkgs.alejandra];
+            buildInputs = [
+              rust-environment 
+              pkgs.alejandra
+              pkgs.rustfmt 
+
+              pkgs.cocogitto 
+              pkgs.bacon
+
+              bomper-cli
+            ];
           };
         };
         apps = {

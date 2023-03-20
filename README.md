@@ -1,8 +1,8 @@
 # bomper
 
-bomper is a CLI tool that replaces the contents of multiple files specified by `bomp.toml`.
+bomper is a CLI tool that replaces the contents of multiple files specified by `bomp.ron`.
 The intended use is to update version strings that are hardcoded into project files.
-A `bomp.toml` will be provided by the project containing paths to files that need to be updated.
+A `bomp.ron` will be provided by the project containing paths to files that need to be updated.
 If the operation fails then no files will be changed.
 
 This can then be combined with a separate tool, such as a [pre bump hook](https://docs.cocogitto.io/guide/#bump-hooks) in Cocogitto's `cog.toml`.

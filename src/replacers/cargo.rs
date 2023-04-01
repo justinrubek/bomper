@@ -75,8 +75,10 @@ impl Replacer for CargoReplacer {
         // Update each package's Cargo.toml with the new version
         for package in packages {
             let cargo_toml_path = package.manifest_path;
+            let cargo_toml_content = std::fs::read(&cargo_toml_path)?;
 
-            let mut cargo_toml = cargo_toml::Manifest::from_path(&cargo_toml_path)?;
+            let mut cargo_toml = cargo_toml::Manifest::from_slice(&cargo_toml_content)?;
+            // let mut cargo_toml = cargo_toml::Manifest::from_path(&cargo_toml_path)?;
 
             let toml_package = match cargo_toml.package {
                 Some(ref mut package) => package,

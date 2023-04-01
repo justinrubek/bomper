@@ -165,11 +165,6 @@ name = "package1"
 edition = "2018"
 version = "0.1.0"
 
-[[bin]]
-path = "src/main.rs"
-name = "package1"
-required-features = []
-
 [dependencies]
 package2 = "0.1.0"
 package3 = "0.1.0"
@@ -184,11 +179,6 @@ version = "0.2.0"
 [dependencies]
 package2 = "0.1.0"
 package3 = "0.1.0"
-
-[[bin]]
-path = "src/main.rs"
-name = "package1"
-required-features = []
 "#;
 
         jail.create_file(

@@ -64,6 +64,21 @@ impl FileJail {
         let file = writer.into_inner().map_err(as_string_error)?;
         Ok(file)
     }
+
+    /// Returns the path to the file in the jail
+    pub fn strip_path(&self, path: PathBuf) -> Result<String> {
+        let path = path.canonicalize()?;
+        if !path.starts_with(&self.canonical_path) {
+            return Err(Error::Other(anyhow!(
+                "FileJail::strip_path: path is not in the jail"
+            )));
+        }
+        let path = path.strip_prefix(&self.canonical_path).unwrap();
+        let path = path.to_str().ok_or_else(|| {
+            Error::Other(anyhow!("FileJail::strip_path: path is not valid unicode"))
+        })?;
+        Ok(path.to_string())
+    }
 }
 
 fn as_string_error<S: Display>(s: S) -> Error {

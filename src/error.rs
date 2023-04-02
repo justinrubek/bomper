@@ -24,6 +24,8 @@ pub enum Error {
     Other(#[from] anyhow::Error),
     #[error("invalid version: {0}")]
     TomlSerialize(#[from] toml::ser::Error),
+    #[error("invalid toml: {0}")]
+    TomlDeserialize(#[from] toml::de::Error),
 
     #[error("invalid replacement count: {0}")]
     InvalidReplacementCount(usize),

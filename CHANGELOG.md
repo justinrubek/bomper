@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [0.6.1](https://github.com/justinrubek/bomper/compare/0.6.0..0.6.1) - 2023-04-02
+#### Bug Fixes
+- **(readme)** change bomp.toml to bomp.ron - ([ae8d311](https://github.com/justinrubek/bomper/commit/ae8d311c0b2a232f619afcfb94994049b686ae77)) - [@justinrubek](https://github.com/justinrubek)
+#### Refactoring
+- Stop using implicit cargo metadata - ([ad4173f](https://github.com/justinrubek/bomper/commit/ad4173fe2ffd7e8a1d10ca5cab8f4d406ddb2ff9)) - [@justinrubek](https://github.com/justinrubek)
+#### Tests
+- Added test for cargo workspaces - ([a0a5261](https://github.com/justinrubek/bomper/commit/a0a5261cbf4ed9c7f7f421641f3440b0f483c408)) - [@justinrubek](https://github.com/justinrubek)
+
+- - -
+
 ## [0.6.0](https://github.com/justinrubek/bomper/compare/0.5.1..0.6.0) - 2023-03-18
 #### Bug Fixes
 - **(nix)** Properly refer to name of package for check - ([d4d41de](https://github.com/justinrubek/bomper/commit/d4d41debf1c84f90d87469b22148fa46a8bbce34)) - [@justinrubek](https://github.com/justinrubek)

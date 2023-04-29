@@ -24,9 +24,7 @@
       pkgs.cocogitto
       inputs'.bomper.packages.cli
       # formatting
-      pkgs.alejandra
-      pkgs.rustfmt
-      pkgs.treefmt
+      self'.packages.treefmt
       # misc
     ];
 

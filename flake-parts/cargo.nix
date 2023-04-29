@@ -23,6 +23,10 @@
       # version control
       pkgs.cocogitto
       inputs'.bomper.packages.cli
+      # formatting
+      pkgs.alejandra
+      pkgs.rustfmt
+      pkgs.treefmt
       # misc
     ];
 

@@ -15,10 +15,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
-    bomper = {
-      url = "github:justinrubek/bomper";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # bomper = {
+    #   url = "github:justinrubek/bomper";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
   };
 
   outputs = inputs:

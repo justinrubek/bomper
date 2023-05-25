@@ -2,6 +2,24 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [0.6.2](https://github.com/justinrubek/bomper/compare/0.6.1..0.6.2) - 2023-05-25
+#### Bug Fixes
+- **(pre-commit-hooks)** Wrap treefmt with the needed formatters - ([8741cd1](https://github.com/justinrubek/bomper/commit/8741cd1c2e2e4e1b7433caf41a62605e9fb20f89)) - [@justinrubek](https://github.com/justinrubek)
+#### Build system
+- **(nix)** update flake inputs - ([08e73ab](https://github.com/justinrubek/bomper/commit/08e73ab020aa045c0926ef85db9f2c4c70eded67)) - [@justinrubek](https://github.com/justinrubek)
+#### Features
+- **(pre-commit-hooks)** Use treefmt - ([eafbd28](https://github.com/justinrubek/bomper/commit/eafbd28a4291a137b144e8a4db1b9ed92e5dbbe6)) - [@justinrubek](https://github.com/justinrubek)
+#### Miscellaneous Chores
+- restore bomper dependency - ([f458621](https://github.com/justinrubek/bomper/commit/f4586210eebc4092c9f6e08176504c566e7125db)) - [@justinrubek](https://github.com/justinrubek)
+- remove bomper dependency - ([2879aef](https://github.com/justinrubek/bomper/commit/2879aef8363632128d07e1d58085497fd8c557dd)) - [@justinrubek](https://github.com/justinrubek)
+#### Refactoring
+- **(nix)** use treefmt support in pre-commit-hooks - ([55defff](https://github.com/justinrubek/bomper/commit/55defff512ada2574482b3761beecc0d600d9a9e)) - [@justinrubek](https://github.com/justinrubek)
+- **(nix)** extract formatting into flake-parts module - ([b937ace](https://github.com/justinrubek/bomper/commit/b937ace88298cacab0369fd81b622362aa074cd0)) - [@justinrubek](https://github.com/justinrubek)
+#### Style
+- **(treefmt)** use 2021 edition - ([3ab1d3e](https://github.com/justinrubek/bomper/commit/3ab1d3e63db8a9588103e221610236eb990f3f5f)) - [@justinrubek](https://github.com/justinrubek)
+
+- - -
+
 ## [0.6.1](https://github.com/justinrubek/bomper/compare/0.6.0..0.6.1) - 2023-04-02
 #### Bug Fixes
 - **(readme)** change bomp.toml to bomp.ron - ([ae8d311](https://github.com/justinrubek/bomper/commit/ae8d311c0b2a232f619afcfb94994049b686ae77)) - [@justinrubek](https://github.com/justinrubek)

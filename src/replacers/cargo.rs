@@ -220,7 +220,7 @@ fn update_package(
             return Ok(None);
         }
 
-        *file_version = versions.new_version.clone();
+        file_version.clone_from(&versions.new_version);
     }
 
     // check if this is a workspace root

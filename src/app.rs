@@ -1,20 +1,20 @@
-use bomper::replacers::cargo::CargoReplacer;
-
-use bomper::config::Config;
-use bomper::error::{Error, Result};
-use bomper::replacers::search::SearchReplacer;
-use bomper::replacers::simple::SimpleReplacer;
-use bomper::replacers::{Replacer, VersionReplacement};
-
-use crate::cli::Args;
+use crate::cli::{BaseArgs, Bump, RawBump};
+use bomper::{
+    config::Config,
+    error::{Error, Result},
+    replacers::{
+        cargo::CargoReplacer, search::SearchReplacer, simple::SimpleReplacer, Replacer,
+        VersionReplacement,
+    },
+};
 
 pub struct App {
-    pub args: Args,
+    pub args: BaseArgs,
     pub config: Config,
 }
 
 impl App {
-    pub fn new(args: Args) -> Result<App> {
+    pub fn new(args: BaseArgs) -> Result<App> {
         let config = match &args.config_file {
             Some(path) => Config::from_ron(&path)?,
             None => {
@@ -32,11 +32,15 @@ impl App {
 }
 
 impl App {
-    pub fn run(&self) -> Result<()> {
+    pub fn bump(&self, _opts: &Bump) -> Result<()> {
+        todo!()
+    }
+
+    pub fn raw_bump(&self, opts: &RawBump) -> Result<()> {
         // self.config.file.clone().par_drain().for_each(|path| {
         let versions = VersionReplacement {
-            old_version: self.args.old_version.clone(),
-            new_version: self.args.new_version.clone(),
+            old_version: opts.old_version.clone(),
+            new_version: opts.new_version.clone(),
         };
         let mut files_to_replace = Vec::new();
 
@@ -46,17 +50,15 @@ impl App {
                 let mut replacers = match &config.search_value {
                     Some(value) => SearchReplacer::new(
                         path.clone(),
-                        &self.args.old_version,
+                        &opts.old_version,
                         value,
-                        &self.args.new_version,
+                        &opts.new_version,
                     )?
                     .determine_replacements()?,
-                    None => SimpleReplacer::new(
-                        path.clone(),
-                        &self.args.old_version,
-                        &self.args.new_version,
-                    )?
-                    .determine_replacements()?,
+                    None => {
+                        SimpleReplacer::new(path.clone(), &opts.old_version, &opts.new_version)?
+                            .determine_replacements()?
+                    }
                 };
 
                 // append new replacers to the list

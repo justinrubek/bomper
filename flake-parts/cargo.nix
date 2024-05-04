@@ -22,7 +22,7 @@
       pkgs.bacon
       # version control
       pkgs.cocogitto
-      inputs'.bomper.packages.cli
+      config.bomper.wrappedBomper
       # formatting
       self'.packages.treefmt
       # misc

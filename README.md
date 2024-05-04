@@ -11,8 +11,18 @@ This can then be combined with a separate tool, such as a [pre bump hook](https:
 
 Run the command with the args `--help` to view the instructions.
 
-See `./examples` for some specific examples. Additionally, see bomper's `cog.toml` and `bomp.ron` for an integration with cocogitto.
+See `./examples` for some specific examples. Additionally, see bomper's `cog.toml` for an integration with cocogitto.
 When running `cog bump,` bomper is invoked and is used to  update the files as part of the version bump commit.
+
+### flake module
+
+A [flake-parts](https://flake.parts) module is provided to allow integration of bomper without needing to keep a `bomp.ron` file in the project's files.
+It works by creating a script that wraps the `bomper` command and passes the `bomp.ron` file as an argument.
+The configuration to use is specified as a nix module option so that it can live inside your nix configuration.
+To use this you must use `flake-parts`, import the flake module, and specify the options in a `perSystem` block.
+See [`./flake-parts/bomper.nix`](./flake-parts/bomper.nix) for an example of its usage - this project dogfoods the module.
+
+With the module enabled, you can access the wrapped bomper package using the `config` parameter of a `perSystem` block: `config.bomper.wrappedBomper`.
 
 ## Contributing
 

@@ -1,7 +1,7 @@
 ignore_merge_commits = false
 branch_whitelist = ["main"]
 pre_bump_hooks = [
-    "bomper {{latest}} {{version}}"
+    "bomper raw-bump {{latest}} {{version}}"
 ]
 post_bump_hooks = [
     "git push",

@@ -11,10 +11,11 @@
       settings = {
         src = ../.;
         hooks = {
-          treefmt.enable = true;
+          treefmt = {
+            enable = true;
+            package = self'.packages.treefmt;
+          };
         };
-
-        settings.treefmt.package = self'.packages.treefmt;
       };
     };
   };

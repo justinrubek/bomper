@@ -9,23 +9,27 @@ use bomper::replacers::{Replacer, VersionReplacement};
 use crate::cli::Args;
 
 pub struct App {
+    pub args: Args,
     pub config: Config,
 }
 
 impl App {
-    pub fn new() -> Result<App> {
-        let ron_config = Config::from_ron(&String::from("bomp.ron"))?;
+    pub fn new(args: Args) -> Result<App> {
+        let config = match &args.config_file {
+            Some(path) => Config::from_ron(&path)?,
+            None => Config::from_ron(&String::from("bomp.ron"))?,
+        };
 
-        Ok(App { config: ron_config })
+        Ok(App { args, config })
     }
 }
 
 impl App {
-    pub fn run(&self, args: &Args) -> Result<()> {
+    pub fn run(&self) -> Result<()> {
         // self.config.file.clone().par_drain().for_each(|path| {
         let versions = VersionReplacement {
-            old_version: args.old_version.clone(),
-            new_version: args.new_version.clone(),
+            old_version: self.args.old_version.clone(),
+            new_version: self.args.new_version.clone(),
         };
         let mut files_to_replace = Vec::new();
 
@@ -35,15 +39,17 @@ impl App {
                 let mut replacers = match &config.search_value {
                     Some(value) => SearchReplacer::new(
                         path.clone(),
-                        &args.old_version,
+                        &self.args.old_version,
                         value,
-                        &args.new_version,
+                        &self.args.new_version,
                     )?
                     .determine_replacements()?,
-                    None => {
-                        SimpleReplacer::new(path.clone(), &args.old_version, &args.new_version)?
-                            .determine_replacements()?
-                    }
+                    None => SimpleReplacer::new(
+                        path.clone(),
+                        &self.args.old_version,
+                        &self.args.new_version,
+                    )?
+                    .determine_replacements()?,
                 };
 
                 // append new replacers to the list
@@ -62,7 +68,7 @@ impl App {
             }
         }
 
-        if args.dry_run {
+        if self.args.dry_run {
             println!("Dry run, not persisting changes");
             for replacer in files_to_replace {
                 println!("Would have replaced: {}", replacer.path.display());

@@ -14,22 +14,32 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
-    bomper = {
-      url = "github:justinrubek/bomper";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs = inputs:
-    inputs.flake-parts.lib.mkFlake {inherit inputs;} {
+    inputs.flake-parts.lib.mkFlake {inherit inputs;} ({
+      flake-parts-lib,
+      withSystem,
+      ...
+    }: let
+      inherit (flake-parts-lib) importApply;
+
+      flakeModules.bomper = importApply ./flake-parts/flake-module.nix {inherit withSystem;};
+    in {
       systems = ["x86_64-linux" "aarch64-linux"];
       imports = [
         inputs.pre-commit-hooks.flakeModule
+        flakeModules.bomper
 
         ./flake-parts/cargo.nix
         ./flake-parts/rust-toolchain.nix
         ./flake-parts/pre-commit.nix
         ./flake-parts/formatting.nix
+        ./flake-parts/bomper.nix
       ];
-    };
+
+      flake = {
+        inherit flakeModules;
+      };
+    });
 }

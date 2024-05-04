@@ -7,10 +7,9 @@ mod cli;
 use cli::Args;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let app: App = App::new()?;
     let args = Args::parse();
-
-    app.run(&args)?;
+    let app: App = App::new(args)?;
+    app.run()?;
 
     Ok(())
 }

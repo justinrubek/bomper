@@ -2,6 +2,22 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [0.7.0](https://github.com/justinrubek/bomper/compare/79b339cfaaf942dda80ce885a416600ed9ac0d67..0.7.0) - 2024-05-04
+#### Build system
+- **(cargo)** cargo update - ([8591230](https://github.com/justinrubek/bomper/commit/85912309c80b07606d2847410b478422675837de)) - [@justinrubek](https://github.com/justinrubek)
+- **(nix)** nix flake update - ([dfa601d](https://github.com/justinrubek/bomper/commit/dfa601d5954e095ca08c34f09d1133e9411fe1e9)) - [@justinrubek](https://github.com/justinrubek)
+#### Continuous Integration
+- **(github/actions)** pass changelog items to github releases - ([79b339c](https://github.com/justinrubek/bomper/commit/79b339cfaaf942dda80ce885a416600ed9ac0d67)) - [@justinrubek](https://github.com/justinrubek)
+#### Features
+- **(cli)** search for configuration file in project base directory - ([e9e8289](https://github.com/justinrubek/bomper/commit/e9e828934189126ac03ba1129ee04481ea9d384a)) - [@justinrubek](https://github.com/justinrubek)
+- **(cli)** optionally specify config file directly - ([63a8efb](https://github.com/justinrubek/bomper/commit/63a8efb547bd43a78a46db261d711feb467f682f)) - [@justinrubek](https://github.com/justinrubek)
+- add `flakeModules.bomper` output - ([1376355](https://github.com/justinrubek/bomper/commit/137635525dc16a8784a54f3d7cf9ca2ca59847ce)) - [@justinrubek](https://github.com/justinrubek)
+#### Miscellaneous Chores
+- rename pre-commit `treefmt` package option - ([1e61861](https://github.com/justinrubek/bomper/commit/1e6186108bc29e89e203f5395f75da19db6d04d8)) - [@justinrubek](https://github.com/justinrubek)
+- purged unused flake-utils input - ([5eb9799](https://github.com/justinrubek/bomper/commit/5eb97995c0993cb87fe8f4b2e08ac7ce827a04f9)) - [@justinrubek](https://github.com/justinrubek)
+
+- - -
+
 ## [0.6.2](https://github.com/justinrubek/bomper/compare/0.6.1..0.6.2) - 2023-05-25
 #### Bug Fixes
 - **(pre-commit-hooks)** Wrap treefmt with the needed formatters - ([8741cd1](https://github.com/justinrubek/bomper/commit/8741cd1c2e2e4e1b7433caf41a62605e9fb20f89)) - [@justinrubek](https://github.com/justinrubek)

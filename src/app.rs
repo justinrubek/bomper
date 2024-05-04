@@ -1,7 +1,7 @@
 use bomper::replacers::cargo::CargoReplacer;
 
 use bomper::config::Config;
-use bomper::error::Result;
+use bomper::error::{Error, Result};
 use bomper::replacers::search::SearchReplacer;
 use bomper::replacers::simple::SimpleReplacer;
 use bomper::replacers::{Replacer, VersionReplacement};
@@ -17,7 +17,14 @@ impl App {
     pub fn new(args: Args) -> Result<App> {
         let config = match &args.config_file {
             Some(path) => Config::from_ron(&path)?,
-            None => Config::from_ron(&String::from("bomp.ron"))?,
+            None => {
+                let base = project_base_directory::get_project_root()
+                    .map_err(|_| Error::ProjectBaseDirectory)?;
+                match base {
+                    Some(base) => Config::from_ron(&base.join("bomp.ron"))?,
+                    None => Config::from_ron(&String::from("bomp.ron"))?,
+                }
+            }
         };
 
         Ok(App { args, config })

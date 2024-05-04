@@ -31,6 +31,8 @@ pub enum Error {
     InvalidReplacementCount(usize),
     #[error("invalid cargo.toml: {0}")]
     InvalidCargoToml(cargo_metadata::camino::Utf8PathBuf),
+    #[error("unable to determine project base directory")]
+    ProjectBaseDirectory,
 }
 
 impl std::fmt::Debug for Error {

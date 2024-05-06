@@ -21,6 +21,12 @@ pub enum Error {
     #[error(transparent)]
     SemverParse(#[from] semver::Error),
     #[error(transparent)]
+    GixDiscover(#[from] gix::discover::Error),
+    #[error(transparent)]
+    GixRef(#[from] gix::reference::iter::Error),
+    #[error(transparent)]
+    GixRefInit(#[from] gix::reference::iter::init::Error),
+    #[error(transparent)]
     Other(#[from] anyhow::Error),
     #[error("invalid version: {0}")]
     TomlSerialize(#[from] toml::ser::Error),
@@ -33,6 +39,8 @@ pub enum Error {
     InvalidCargoToml(cargo_metadata::camino::Utf8PathBuf),
     #[error("unable to determine project base directory")]
     ProjectBaseDirectory,
+    #[error("unable to determine the most recent tag")]
+    TagError,
 }
 
 impl std::fmt::Debug for Error {

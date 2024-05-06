@@ -6,6 +6,7 @@ use bomper::{
         cargo::CargoReplacer, search::SearchReplacer, simple::SimpleReplacer, Replacer,
         VersionReplacement,
     },
+    versioning::get_latest_tag,
 };
 
 pub struct App {
@@ -33,6 +34,9 @@ impl App {
 
 impl App {
     pub fn bump(&self, _opts: &Bump) -> Result<()> {
+        let repo = gix::discover(".")?;
+
+        let tag = get_latest_tag(&repo)?;
         todo!()
     }
 

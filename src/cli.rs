@@ -34,4 +34,22 @@ pub(crate) struct RawBump {
 }
 
 #[derive(clap::Args, Debug)]
-pub(crate) struct Bump {}
+pub(crate) struct Bump {
+    #[clap(flatten)]
+    pub options: BumpOptions,
+}
+
+#[derive(clap::Args, Debug)]
+#[command(group = clap::ArgGroup::new("bump-type").required(true))]
+pub(crate) struct BumpOptions {
+    #[arg(short, long, group = "bump-type")]
+    pub version: Option<String>,
+    #[arg(short, long, group = "bump-type")]
+    pub automatic: bool,
+    #[arg(short = 'M', long, group = "bump-type")]
+    pub major: bool,
+    #[arg(short, long, group = "bump-type")]
+    pub minor: bool,
+    #[arg(short, long, group = "bump-type")]
+    pub patch: bool,
+}

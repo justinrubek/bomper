@@ -44,7 +44,7 @@ impl App {
 
         let increment = match &opts.options.version {
             Some(version) => VersionIncrement::Manual(semver::Version::parse(version)?),
-            None if opts.options.automatic => determine_increment(commits),
+            None if opts.options.automatic => determine_increment(&commits, &tag.version),
             None if opts.options.major => VersionIncrement::Major,
             None if opts.options.minor => VersionIncrement::Minor,
             None if opts.options.patch => VersionIncrement::Patch,

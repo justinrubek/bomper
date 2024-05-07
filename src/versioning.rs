@@ -3,6 +3,7 @@ use conventional_commit_parser::commit::ConventionalCommit;
 
 #[derive(Clone, Debug, Eq)]
 pub struct Tag {
+    pub commit_id: gix::ObjectId,
     pub version: semver::Version,
 }
 
@@ -42,12 +43,37 @@ pub fn get_latest_tag(repo: &gix::Repository) -> Result<Tag> {
             let tag = tag.ok()?;
             let name = tag.name().shorten().to_string();
             let version = semver::Version::parse(&name).unwrap();
-            Some(Tag { version })
+            let commit_id = tag.id().into();
+            Some(Tag { version, commit_id })
         })
         .max()
         .ok_or_else(|| Error::TagError)?;
 
     Ok(tag)
+}
+
+pub fn get_commits_since_tag(repo: &gix::Repository, tag: &Tag) -> Result<Vec<ConventionalCommit>> {
+    let head = repo.head_commit()?;
+    let ancestors = head.ancestors();
+    let mut parsed_commits = Vec::new();
+    for commit in ancestors.all()? {
+        let commit = commit.unwrap();
+        let object = commit.object().unwrap();
+        if commit.id() == tag.commit_id {
+            break;
+        }
+        let message = object.message().unwrap();
+        let mut full_message = String::new();
+        full_message.push_str(message.title.to_string().trim());
+        if let Some(body) = message.body {
+            full_message.push_str("\n\n");
+            full_message.push_str(&body.to_string());
+        }
+        let parsed = conventional_commit_parser::parse(&full_message)?;
+        parsed_commits.push(parsed);
+    }
+
+    Ok(parsed_commits)
 }
 
 pub fn determine_increment(_commits: Vec<ConventionalCommit>) -> VersionIncrement {

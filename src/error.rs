@@ -27,6 +27,12 @@ pub enum Error {
     #[error(transparent)]
     GixRefInit(#[from] gix::reference::iter::init::Error),
     #[error(transparent)]
+    GixHeadCommit(#[from] gix::reference::head_commit::Error),
+    #[error(transparent)]
+    GixWalk(#[from] gix::revision::walk::Error),
+    #[error(transparent)]
+    ConventialCommitParse(#[from] conventional_commit_parser::error::ParseError),
+    #[error(transparent)]
     Other(#[from] anyhow::Error),
     #[error("invalid version: {0}")]
     TomlSerialize(#[from] toml::ser::Error),

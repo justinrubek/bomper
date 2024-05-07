@@ -6,7 +6,10 @@ use bomper::{
         cargo::CargoReplacer, search::SearchReplacer, simple::SimpleReplacer, Replacer,
         VersionReplacement,
     },
-    versioning::{determine_increment, get_latest_tag, increment_version, VersionIncrement},
+    versioning::{
+        determine_increment, get_commits_since_tag, get_latest_tag, increment_version,
+        VersionIncrement,
+    },
 };
 
 pub struct App {
@@ -37,8 +40,7 @@ impl App {
         let repo = gix::discover(".")?;
 
         let tag = get_latest_tag(&repo)?;
-        // TODO: determine commits from tag to HEAD
-        let commits = vec![];
+        let commits = get_commits_since_tag(&repo, &tag)?;
 
         let increment = match &opts.options.version {
             Some(version) => VersionIncrement::Manual(semver::Version::parse(version)?),

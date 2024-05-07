@@ -1,5 +1,5 @@
 use crate::error::{Error, Result};
-use conventional_commit_parser::commit::ConventionalCommit;
+use conventional_commit_parser::commit::{CommitType, ConventionalCommit};
 
 #[derive(Clone, Debug, Eq)]
 pub struct Tag {
@@ -76,8 +76,26 @@ pub fn get_commits_since_tag(repo: &gix::Repository, tag: &Tag) -> Result<Vec<Co
     Ok(parsed_commits)
 }
 
-pub fn determine_increment(_commits: Vec<ConventionalCommit>) -> VersionIncrement {
-    todo!()
+pub fn determine_increment(
+    commits: &[ConventionalCommit],
+    current_version: &semver::Version,
+) -> VersionIncrement {
+    let has_breaking = commits.iter().any(|commit| commit.is_breaking_change);
+    if has_breaking {
+        match current_version.major {
+            0 => VersionIncrement::Minor,
+            _ => VersionIncrement::Major,
+        }
+    } else {
+        let has_feature = commits
+            .iter()
+            .any(|commit| commit.commit_type == CommitType::Feature);
+        if has_feature {
+            VersionIncrement::Minor
+        } else {
+            VersionIncrement::Patch
+        }
+    }
 }
 
 pub fn increment_version(

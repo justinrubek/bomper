@@ -25,6 +25,19 @@ impl PartialEq for Tag {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct Commit {
+    pub commit_id: gix::ObjectId,
+    pub conventional_commit: ConventionalCommit,
+    pub signature: gix::actor::Signature,
+}
+
+impl AsRef<ConventionalCommit> for Commit {
+    fn as_ref(&self) -> &ConventionalCommit {
+        &self.conventional_commit
+    }
+}
+
 #[derive(Debug)]
 pub enum VersionIncrement {
     Manual(semver::Version),
@@ -52,7 +65,7 @@ pub fn get_latest_tag(repo: &gix::Repository) -> Result<Tag> {
     Ok(tag)
 }
 
-pub fn get_commits_since_tag(repo: &gix::Repository, tag: &Tag) -> Result<Vec<ConventionalCommit>> {
+pub fn get_commits_since_tag(repo: &gix::Repository, tag: &Tag) -> Result<Vec<Commit>> {
     let head = repo.head_commit()?;
     let ancestors = head.ancestors();
     let mut parsed_commits = Vec::new();
@@ -70,31 +83,38 @@ pub fn get_commits_since_tag(repo: &gix::Repository, tag: &Tag) -> Result<Vec<Co
             full_message.push_str(&body.to_string());
         }
         let parsed = conventional_commit_parser::parse(&full_message)?;
-        parsed_commits.push(parsed);
+        parsed_commits.push(Commit {
+            commit_id: commit.id().into(),
+            conventional_commit: parsed,
+            signature: object.author().to_owned()?.into(),
+        });
     }
 
     Ok(parsed_commits)
 }
 
-pub fn determine_increment(
-    commits: &[ConventionalCommit],
+pub fn determine_increment<'a, I: IntoIterator<Item = &'a ConventionalCommit>>(
+    commits: I,
     current_version: &semver::Version,
 ) -> VersionIncrement {
-    let has_breaking = commits.iter().any(|commit| commit.is_breaking_change);
+    let (has_breaking, has_feature) =
+        commits
+            .into_iter()
+            .fold((false, false), |(has_breaking, has_feature), commit| {
+                (
+                    has_breaking || commit.is_breaking_change,
+                    has_feature || commit.commit_type == CommitType::Feature,
+                )
+            });
     if has_breaking {
         match current_version.major {
             0 => VersionIncrement::Minor,
             _ => VersionIncrement::Major,
         }
+    } else if has_feature {
+        VersionIncrement::Minor
     } else {
-        let has_feature = commits
-            .iter()
-            .any(|commit| commit.commit_type == CommitType::Feature);
-        if has_feature {
-            VersionIncrement::Minor
-        } else {
-            VersionIncrement::Patch
-        }
+        VersionIncrement::Patch
     }
 }
 

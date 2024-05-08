@@ -1,5 +1,6 @@
 use crate::cli::{BaseArgs, Bump, RawBump};
 use bomper::{
+    changelog::generate_changelog_entry,
     config::Config,
     error::{Error, Result},
     replacers::{
@@ -44,14 +45,19 @@ impl App {
 
         let increment = match &opts.options.version {
             Some(version) => VersionIncrement::Manual(semver::Version::parse(version)?),
-            None if opts.options.automatic => determine_increment(&commits, &tag.version),
+            None if opts.options.automatic => {
+                let conventional_commits = commits.iter().map(|c| c.as_ref());
+                determine_increment(conventional_commits, &tag.version)
+            }
             None if opts.options.major => VersionIncrement::Major,
             None if opts.options.minor => VersionIncrement::Minor,
             None if opts.options.patch => VersionIncrement::Patch,
             _ => unreachable!(),
         };
-        let new_version = increment_version(tag.version, increment);
+        let new_version = increment_version(tag.version.clone(), increment);
         println!("New version: {}", new_version);
+        let changelog_entry = generate_changelog_entry(&commits, &new_version);
+        println!("{}", changelog_entry);
         todo!()
     }
 

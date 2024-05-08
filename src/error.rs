@@ -23,6 +23,8 @@ pub enum Error {
     #[error(transparent)]
     GixDiscover(#[from] gix::discover::Error),
     #[error(transparent)]
+    GixDecode(#[from] gix::worktree::object::decode::Error),
+    #[error(transparent)]
     GixRef(#[from] gix::reference::iter::Error),
     #[error(transparent)]
     GixRefInit(#[from] gix::reference::iter::init::Error),

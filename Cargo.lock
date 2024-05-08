@@ -185,6 +185,7 @@ dependencies = [
  "figment",
  "gix 0.62.0",
  "memmap",
+ "minijinja",
  "parking_lot",
  "project-base-directory",
  "rayon",
@@ -2258,6 +2259,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fe751422e4a8caa417e13c3ea66452215d7d63e19e604f4980461212f3ae1322"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "minijinja"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7165d0e94806d52ad5295e4b54a95176d831814840bc067298ca647e1c956338"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

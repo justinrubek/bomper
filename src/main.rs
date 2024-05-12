@@ -7,7 +7,13 @@ mod cli;
 use cli::{Args, Commands};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    tracing_subscriber::fmt()
+        .without_time()
+        .with_target(false)
+        .init();
+
     let args = Args::parse();
+    tracing::debug!("{:?}", args);
     let app = App::new(args.base_args).map_err(|_| "Failed to load configuration")?;
     match args.command {
         Commands::RawBump(raw_bump) => {

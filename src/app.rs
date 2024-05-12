@@ -12,6 +12,11 @@ use bomper::{
         VersionIncrement,
     },
 };
+use gix::traverse::tree::Recorder;
+use gix_util::traverse::Traverse;
+use std::{collections::HashMap, path::PathBuf};
+
+mod gix_util;
 
 pub struct App {
     pub args: BaseArgs,
@@ -58,6 +63,17 @@ impl App {
         println!("New version: {}", new_version);
         let changelog_entry = generate_changelog_entry(&commits, &new_version);
         println!("{}", changelog_entry);
+
+        // create a commit
+        let changes = HashMap::new();
+        let new_tree = prepare_commit(&repo, changes)?;
+        repo.commit(
+            "HEAD",
+            "chore(version): {old_version} -> {new_version}",
+            new_tree,
+            vec![repo.head_id()?],
+        )?;
+
         todo!()
     }
 
@@ -117,4 +133,49 @@ impl App {
 
         Ok(())
     }
+}
+
+/// Prepares the tree for a commit with the given changes, returning the new tree's object ID.
+/// This should be removed when the gix library has a proper implementation that supports writing
+/// to the index.
+///
+/// changes: A map of paths to repository files that maps to the temporary files that will replace them.
+/// The temporary file contents should be used in place of the original file contents.
+/// The name is used to determine which git tree entry to replace.
+fn prepare_commit(
+    repo: &gix::Repository,
+    changes: HashMap<PathBuf, PathBuf>,
+) -> Result<gix::ObjectId> {
+    let head = repo.head_commit()?;
+    let tree = head.tree()?;
+
+    let change_ids = changes
+        .into_iter()
+        .map(|(old, new)| {
+            let new_contents = std::fs::File::open(new)?;
+            let new_id = repo.write_blob_stream(new_contents)?;
+            Ok((old, new_id.detach()))
+        })
+        .collect::<Result<HashMap<PathBuf, gix::ObjectId>>>();
+
+    let tree_info = {
+        let search = tree.traverse();
+
+        // let mut recorder = Recorder::default().track_location(Some(gix::traverse::tree::recorder::Location::Path));
+        // search.breadthfirst(&mut recorder);
+        // println!("{recorder:?}");
+        let mut traverse = Traverse::new(Some(repo));
+        search.breadthfirst(&mut traverse);
+        traverse.records
+    };
+    tree_info.iter().for_each(|entry| println!("{entry:?}"));
+
+    // let tree = gix::worktree::object::Tree::try_from(tree)?;
+    // for entry in tree.entries.iter() {
+    //     let filename = &entry.filename;
+    //     let oid = entry.oid;
+    //     println!("Entry: {oid:?} {filename}");
+    // }
+
+    todo!()
 }

@@ -12,7 +12,9 @@ use bomper::{
         VersionIncrement,
     },
 };
-use std::io::Write;
+use console::{style, Style};
+use similar::{ChangeTag, TextDiff};
+use std::{fmt, io::Write};
 
 pub struct App {
     pub args: BaseArgs,
@@ -85,10 +87,59 @@ impl App {
 /// This function is responsible for respecting the `dry_run` flag, so it will only persist changes
 /// if the flag is not set.
 fn apply_changes(changes: Vec<FileReplacer>, args: &BaseArgs) -> Result<()> {
+    struct Line(Option<usize>);
+
+    impl fmt::Display for Line {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self.0 {
+                None => write!(f, "    "),
+                Some(idx) => write!(f, "{:<4}", idx + 1),
+            }
+        }
+    }
+
     if args.dry_run {
         println!("Dry run, not persisting changes");
         for replacer in changes {
-            println!("Would have replaced: {}", replacer.path.display());
+            let original = std::fs::read_to_string(&replacer.path)?;
+            let new = std::fs::read_to_string(&replacer.temp_file)?;
+
+            println!("{}", style(replacer.path.display()).cyan());
+            let (w, _) = console::Term::stdout().size();
+            // write `─` for the width of the terminal
+            println!("{:-^1$}", style("-").cyan(), w as usize);
+
+            let diff = TextDiff::from_lines(&original, &new);
+            for (idx, group) in diff.grouped_ops(3).iter().enumerate() {
+                if idx > 0 {
+                    println!("{:-^1$}", "-", 80);
+                }
+                for op in group {
+                    for change in diff.iter_inline_changes(op) {
+                        let (sign, s) = match change.tag() {
+                            ChangeTag::Delete => ("-", Style::new().red()),
+                            ChangeTag::Insert => ("+", Style::new().green()),
+                            ChangeTag::Equal => (" ", Style::new().dim()),
+                        };
+                        print!(
+                            "{}{} |{}",
+                            style(Line(change.old_index())).dim(),
+                            style(Line(change.new_index())).dim(),
+                            s.apply_to(sign).bold(),
+                        );
+                        for (emphasized, value) in change.iter_strings_lossy() {
+                            if emphasized {
+                                print!("{}", s.apply_to(value).underlined().on_black());
+                            } else {
+                                print!("{}", s.apply_to(value));
+                            }
+                        }
+                        if change.missing_newline() {
+                            println!();
+                        }
+                    }
+                }
+            }
         }
 
         return Ok(());

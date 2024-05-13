@@ -36,6 +36,8 @@ pub enum Error {
     ConventialCommitParse(#[from] conventional_commit_parser::error::ParseError),
     #[error(transparent)]
     Other(#[from] anyhow::Error),
+    #[error(transparent)]
+    StdPathStripPrefix(#[from] std::path::StripPrefixError),
     #[error("invalid version: {0}")]
     TomlSerialize(#[from] toml::ser::Error),
     #[error("invalid toml: {0}")]

@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use cargo_metadata::camino::Utf8PathBuf;
+use cargo_metadata::camino::Utf8Path;
 use std::path::Path;
 use std::{io::prelude::*, path::PathBuf, str::FromStr};
 
@@ -151,11 +151,12 @@ fn get_workspace_metadata() -> Result<cargo_metadata::Metadata> {
 
 /// Updates the workspace root's Cargo.toml with the new version
 fn update_workspace_root(
-    workspace_root: &Utf8PathBuf,
+    workspace_root: &Utf8Path,
     versions: &VersionReplacement,
 ) -> Result<Option<FileReplacer>> {
     let cargo_toml_path = workspace_root.join("Cargo.toml");
-    let cargo_toml_content = std::fs::read(&cargo_toml_path)?;
+    let cargo_toml_path = cargo_toml_path.strip_prefix(workspace_root)?;
+    let cargo_toml_content = std::fs::read(cargo_toml_path)?;
 
     let mut cargo_toml = cargo_toml::Manifest::from_slice(&cargo_toml_content)?;
 
@@ -194,12 +195,13 @@ fn update_workspace_root(
 /// Updates a package's Cargo.toml with the new version
 fn update_package(
     package: &cargo_metadata::Package,
-    workspace_root: &Utf8PathBuf,
+    workspace_root: &Utf8Path,
     lock_path: &Path,
     versions: &VersionReplacement,
 ) -> Result<Option<FileReplacer>> {
     let cargo_toml_path = package.manifest_path.clone();
-    let cargo_toml_content = std::fs::read(&cargo_toml_path)?;
+    let cargo_toml_path = cargo_toml_path.strip_prefix(workspace_root)?;
+    let cargo_toml_content = std::fs::read(cargo_toml_path)?;
 
     let mut cargo_toml = cargo_toml::Manifest::from_slice(&cargo_toml_content)?;
     // let mut cargo_toml = cargo_toml::Manifest::from_path(&cargo_toml_path)?;
@@ -207,7 +209,7 @@ fn update_package(
     {
         let toml_package = match cargo_toml.package {
             Some(ref mut package) => package,
-            None => return Err(Error::InvalidCargoToml(cargo_toml_path)),
+            None => return Err(Error::InvalidCargoToml(cargo_toml_path.into())),
         };
 
         let file_version = match &mut toml_package.version {

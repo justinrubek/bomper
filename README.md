@@ -1,5 +1,9 @@
 # bomper
 
+[<img alt="github" src="https://img.shields.io/badge/github-justinrubek/bomper-8da0cb?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/justinrubek/bomper)
+[<img alt="crates.io" src="https://img.shields.io/crates/v/bomper.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/bomper)
+[<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-bomper-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" height="20">](https://docs.rs/bomper)
+
 bomper is a CLI tool that replaces the contents of multiple files specified by `bomp.ron`.
 The intended use is to update version strings that are hardcoded into project files.
 A `bomp.ron` will be provided by the project containing paths to files that need to be updated.

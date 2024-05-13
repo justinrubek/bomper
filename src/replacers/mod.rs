@@ -11,6 +11,7 @@ pub trait Replacer {
     fn determine_replacements(self) -> Result<Option<Vec<FileReplacer>>>;
 }
 
+#[derive(Clone, Debug)]
 pub struct VersionReplacement {
     pub old_version: String,
     pub new_version: String,

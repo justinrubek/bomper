@@ -95,7 +95,7 @@ fn apply_changes(changes: Vec<FileReplacer>, args: &BaseArgs) -> Result<()> {
             println!("{}", style(replacer.path.display()).cyan());
             let (_, w) = console::Term::stdout().size();
             // write `─` for the width of the terminal
-            println!("{:-^1$}", style("─").cyan(), w as usize);
+            println!("{:─^1$}", style("─").cyan(), w as usize);
 
             let diff = TextDiff::from_lines(&original, &new);
             for (idx, group) in diff.grouped_ops(3).iter().enumerate() {

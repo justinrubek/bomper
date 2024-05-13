@@ -49,6 +49,8 @@ pub enum Error {
     ProjectBaseDirectory,
     #[error("unable to determine the most recent tag")]
     TagError,
+    #[error("changelog does not contain marker character")]
+    ChangelogMarker,
 }
 
 impl std::fmt::Debug for Error {

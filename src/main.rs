@@ -1,4 +1,6 @@
+use bomper::config::Config;
 use clap::Parser;
+use std::path::PathBuf;
 
 mod app;
 use app::App;
@@ -13,8 +15,41 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .init();
 
     let args = Args::parse();
-    tracing::debug!("{:?}", args);
-    let app = App::new(args.base_args).map_err(|_| "Failed to load configuration")?;
+    tracing::debug!(?args);
+
+    let project = project_base_directory::Project::discover()
+        .map_err(|_| bomper::error::Error::ProjectBaseDirectory)?;
+    tracing::debug!(?project);
+    if let Some(base_directory) = project.root_directory {
+        std::env::set_current_dir(base_directory)?;
+    }
+
+    let config_path = match &args.base_args.config_file {
+        Some(path) => path.to_owned(),
+        None => {
+            let config_path = match project.config_home {
+                Some(dir) => {
+                    let config_path = dir.join("bomp.ron");
+                    if config_path.exists() {
+                        config_path
+                    } else {
+                        PathBuf::from("bomp.ron")
+                    }
+                }
+                None => PathBuf::from("bomp.ron"),
+            };
+            if !config_path.exists() {
+                return Err("No configuration file found".into());
+            }
+            config_path.to_owned()
+        }
+    };
+    let config_path = config_path.canonicalize()?;
+    tracing::debug!(?config_path);
+    let config = Config::from_ron(&config_path)?;
+    tracing::debug!(?config);
+
+    let app = App::new(args.base_args, config);
     match args.command {
         Commands::RawBump(raw_bump) => {
             app.raw_bump(&raw_bump)?;

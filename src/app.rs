@@ -22,20 +22,8 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(args: BaseArgs) -> Result<App> {
-        let config = match &args.config_file {
-            Some(path) => Config::from_ron(&path)?,
-            None => {
-                let base = project_base_directory::get_project_root()
-                    .map_err(|_| Error::ProjectBaseDirectory)?;
-                match base {
-                    Some(base) => Config::from_ron(&base.join("bomp.ron"))?,
-                    None => Config::from_ron(&String::from("bomp.ron"))?,
-                }
-            }
-        };
-
-        Ok(App { args, config })
+    pub fn new(args: BaseArgs, config: Config) -> App {
+        App { args, config }
     }
 }
 

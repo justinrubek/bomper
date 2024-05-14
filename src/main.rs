@@ -51,6 +51,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let app = App::new(args.base_args, config);
     match args.command {
+        Commands::Changelog(changelog) => {
+            app.changelog(&changelog)?;
+        }
         Commands::RawBump(raw_bump) => {
             app.raw_bump(&raw_bump)?;
         }

@@ -1,4 +1,4 @@
-use crate::cli::{BaseArgs, Bump, RawBump};
+use crate::cli::{BaseArgs, Bump, Changelog, RawBump};
 use bomper::{
     changelog::generate_changelog_entry,
     config::Config,
@@ -7,10 +7,7 @@ use bomper::{
         cargo::CargoReplacer, file::FileReplacer, search::SearchReplacer, simple::SimpleReplacer,
         Replacer, VersionReplacement,
     },
-    versioning::{
-        determine_increment, get_commits_since_tag, get_latest_tag, increment_version,
-        VersionIncrement,
-    },
+    versioning::{get_commits_since_tag, get_latest_tag, increment_version},
 };
 use console::{style, Style};
 use gix::refs::transaction::PreviousValue;
@@ -35,17 +32,7 @@ impl App {
         let tag = get_latest_tag(&repo)?;
         let commits = get_commits_since_tag(&repo, &tag)?;
 
-        let increment = match &opts.options.version {
-            Some(version) => VersionIncrement::Manual(semver::Version::parse(version)?),
-            None if opts.options.automatic => {
-                let conventional_commits = commits.iter().map(|c| c.as_ref());
-                determine_increment(conventional_commits, &tag.version)
-            }
-            None if opts.options.major => VersionIncrement::Major,
-            None if opts.options.minor => VersionIncrement::Minor,
-            None if opts.options.patch => VersionIncrement::Patch,
-            _ => unreachable!(),
-        };
+        let increment = opts.options.determine_increment(&commits, &tag.version)?;
         let new_version = increment_version(tag.version.clone(), increment);
         let changelog_entry = generate_changelog_entry(&commits, &new_version);
 
@@ -70,6 +57,27 @@ impl App {
         Ok(())
     }
 
+    pub fn changelog(&self, opts: &Changelog) -> Result<()> {
+        let repo = gix::discover(".")?;
+        let tag = get_latest_tag(&repo)?;
+        let commits = get_commits_since_tag(&repo, &tag)?;
+        let increment = opts.options.determine_increment(&commits, &tag.version)?;
+        let new_version = increment_version(tag.version.clone(), increment);
+        let changelog_entry = generate_changelog_entry(&commits, &new_version);
+        let path = std::path::PathBuf::from("CHANGELOG.md");
+        let old_changelog = std::fs::read_to_string(&path).unwrap_or_default();
+        let new_changelog = create_changelog(&path, &changelog_entry)?;
+        if opts.no_decorations {
+            match opts.only_current_version {
+                true => println!("{}", changelog_entry),
+                false => println!("{}", new_changelog),
+            }
+        } else {
+            print_diff(old_changelog, new_changelog, path.display().to_string());
+        }
+        Ok(())
+    }
+
     pub fn raw_bump(&self, opts: &RawBump) -> Result<()> {
         let replacement = VersionReplacement {
             old_version: opts.old_version.clone(),
@@ -86,59 +94,13 @@ impl App {
 /// This function is responsible for respecting the `dry_run` flag, so it will only persist changes
 /// if the flag is not set.
 fn apply_changes(changes: Vec<FileReplacer>, args: &BaseArgs) -> Result<Option<Vec<PathBuf>>> {
-    struct Line(Option<usize>);
-
-    impl fmt::Display for Line {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            match self.0 {
-                None => write!(f, "    "),
-                Some(idx) => write!(f, "{:<4}", idx + 1),
-            }
-        }
-    }
-
     if args.dry_run {
         println!("Dry run, not persisting changes");
         for replacer in changes {
             let original = std::fs::read_to_string(&replacer.path)?;
             let new = std::fs::read_to_string(&replacer.temp_file)?;
 
-            println!("{}", style(replacer.path.display()).cyan());
-            let (_, w) = console::Term::stdout().size();
-            // write `─` for the width of the terminal
-            println!("{:─^1$}", style("─").cyan(), w as usize);
-
-            let diff = TextDiff::from_lines(&original, &new);
-            for (idx, group) in diff.grouped_ops(3).iter().enumerate() {
-                if idx > 0 {
-                    println!("{:-^1$}", "-", 80);
-                }
-                for op in group {
-                    for change in diff.iter_inline_changes(op) {
-                        let (sign, s) = match change.tag() {
-                            ChangeTag::Delete => ("-", Style::new().red()),
-                            ChangeTag::Insert => ("+", Style::new().green()),
-                            ChangeTag::Equal => (" ", Style::new().dim()),
-                        };
-                        print!(
-                            "{}{} |{}",
-                            style(Line(change.old_index())).dim(),
-                            style(Line(change.new_index())).dim(),
-                            s.apply_to(sign).bold(),
-                        );
-                        for (emphasized, value) in change.iter_strings_lossy() {
-                            if emphasized {
-                                print!("{}", s.apply_to(value).underlined().on_black());
-                            } else {
-                                print!("{}", s.apply_to(value));
-                            }
-                        }
-                        if change.missing_newline() {
-                            println!();
-                        }
-                    }
-                }
-            }
+            print_diff(original, new, replacer.path.display().to_string())
         }
 
         Ok(None)
@@ -213,9 +175,9 @@ fn create_changelog(path: &std::path::Path, contents: &str) -> Result<String> {
 
             let header = &original_changelog[..start];
             let rest = &original_changelog[start..];
-            Ok(format!("{header}\n{MARKER}\n{contents}\n{rest}"))
+            Ok(format!("{header}{MARKER}\n\n{contents}\n{rest}"))
         }
-        Ok(false) => Ok(format!("# Changelog\n\n{MARKER}\n{contents}")),
+        Ok(false) => Ok(format!("# Changelog\n\n{MARKER}\n\n{contents}\n\n{MARKER}\n\ngenerated by [bomper](https://github.com/justinrubek/bomper)")),
         Err(e) => Err(e.into()),
     }
 }
@@ -288,4 +250,54 @@ fn rewrite_tree(
     Ok(gix::worktree::object::Tree {
         entries: new_entries,
     })
+}
+
+fn print_diff(original: String, new: String, context: String) {
+    struct Line(Option<usize>);
+
+    impl fmt::Display for Line {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self.0 {
+                None => write!(f, "    "),
+                Some(idx) => write!(f, "{:<4}", idx + 1),
+            }
+        }
+    }
+
+    println!("\n{}", style(context).cyan());
+    let (_, w) = console::Term::stdout().size();
+    // write `─` for the width of the terminal
+    println!("{:─^1$}", style("─").cyan(), w as usize);
+
+    let diff = TextDiff::from_lines(&original, &new);
+    for (idx, group) in diff.grouped_ops(3).iter().enumerate() {
+        if idx > 0 {
+            println!("{:-^1$}", "-", 80);
+        }
+        for op in group {
+            for change in diff.iter_inline_changes(op) {
+                let (sign, s) = match change.tag() {
+                    ChangeTag::Delete => ("-", Style::new().red()),
+                    ChangeTag::Insert => ("+", Style::new().green()),
+                    ChangeTag::Equal => (" ", Style::new().dim()),
+                };
+                print!(
+                    "{}{} |{}",
+                    style(Line(change.old_index())).dim(),
+                    style(Line(change.new_index())).dim(),
+                    s.apply_to(sign).bold(),
+                );
+                for (emphasized, value) in change.iter_strings_lossy() {
+                    if emphasized {
+                        print!("{}", s.apply_to(value).underlined().on_black());
+                    } else {
+                        print!("{}", s.apply_to(value));
+                    }
+                }
+                if change.missing_newline() {
+                    println!();
+                }
+            }
+        }
+    }
 }

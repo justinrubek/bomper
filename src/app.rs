@@ -14,7 +14,7 @@ use bomper::{
 };
 use console::{style, Style};
 use similar::{ChangeTag, TextDiff};
-use std::{fmt, io::Write};
+use std::{fmt, io::Write, path::PathBuf};
 
 pub struct App {
     pub args: BaseArgs,
@@ -54,7 +54,16 @@ impl App {
         };
         let mut file_changes = determine_changes(&self.config, &replacement)?;
         file_changes.push(apply_changelog(changelog_entry)?);
-        apply_changes(file_changes, &self.args)?;
+        if let Some(changes) = apply_changes(file_changes, &self.args)? {
+            let new_tree = prepare_commit(&repo, changes)?;
+            let object_id = repo.write_object(&new_tree)?;
+            repo.commit(
+                "HEAD",
+                format!("chore(version): {new_version}"),
+                object_id,
+                vec![repo.head_id()?],
+            )?;
+        }
 
         Ok(())
     }
@@ -74,7 +83,7 @@ impl App {
 /// Persist file changes to the filesystem.
 /// This function is responsible for respecting the `dry_run` flag, so it will only persist changes
 /// if the flag is not set.
-fn apply_changes(changes: Vec<FileReplacer>, args: &BaseArgs) -> Result<()> {
+fn apply_changes(changes: Vec<FileReplacer>, args: &BaseArgs) -> Result<Option<Vec<PathBuf>>> {
     struct Line(Option<usize>);
 
     impl fmt::Display for Line {
@@ -130,14 +139,15 @@ fn apply_changes(changes: Vec<FileReplacer>, args: &BaseArgs) -> Result<()> {
             }
         }
 
-        return Ok(());
+        Ok(None)
     } else {
+        let replaced_files: Vec<PathBuf> = changes.iter().map(|r| r.path.clone()).collect();
         for replacer in changes {
             replacer.persist()?;
         }
-    }
 
-    Ok(())
+        Ok(Some(replaced_files))
+    }
 }
 
 /// Determine the changes to make to the repository to update the version.
@@ -217,4 +227,63 @@ fn apply_changelog(entry: String) -> Result<FileReplacer> {
     file.write_all(new_changelog.as_bytes())?;
 
     Ok(FileReplacer { path, temp_file })
+}
+
+fn prepare_commit(
+    repo: &gix::Repository,
+    changes: Vec<PathBuf>,
+) -> Result<gix::worktree::object::Tree> {
+    let head = repo.head_commit()?;
+    let tree: gix::worktree::object::Tree = head.tree()?.decode()?.into();
+    let new_tree = rewrite_tree(repo, &tree.clone(), &changes)?;
+    Ok(new_tree)
+}
+
+/// Creates a modified git tree with the provided path's entries changed to match their new
+/// contents.
+///
+/// TODO: remove this once `gix` supports a better way to create changes
+fn rewrite_tree(
+    repo: &gix::Repository,
+    tree: &gix::worktree::object::Tree,
+    changes: &Vec<PathBuf>,
+) -> Result<gix::worktree::object::Tree> {
+    let mut new_entries = vec![];
+
+    for entry in &tree.entries {
+        let object: gix::Object = repo.find_object(entry.oid)?;
+        match &object.kind {
+            gix::object::Kind::Tree => {
+                let old_tree = object.clone().into_tree().decode()?.into();
+                let new_tree = rewrite_tree(repo, &old_tree, changes)?;
+                let new_id = repo.write_object(&new_tree)?;
+
+                new_entries.push(gix::worktree::object::tree::Entry {
+                    filename: entry.filename.clone(),
+                    mode: entry.mode,
+                    oid: new_id.into(),
+                });
+            }
+            gix::object::Kind::Blob => {
+                let file_path: PathBuf = entry.filename.clone().to_string().into();
+                if let Some(new_path) = changes.iter().find(|p| **p == file_path) {
+                    println!("replacing {:?}", new_path);
+                    let new_id = repo.write_blob_stream(std::fs::File::open(new_path)?)?;
+
+                    new_entries.push(gix::worktree::object::tree::Entry {
+                        filename: entry.filename.clone(),
+                        mode: entry.mode,
+                        oid: new_id.into(),
+                    });
+                } else {
+                    new_entries.push(entry.clone());
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    Ok(gix::worktree::object::Tree {
+        entries: new_entries,
+    })
 }

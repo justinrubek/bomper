@@ -21,13 +21,23 @@ pub enum Error {
     #[error(transparent)]
     SemverParse(#[from] semver::Error),
     #[error(transparent)]
+    GixCommit(#[from] gix::commit::Error),
+    #[error(transparent)]
     GixDiscover(#[from] gix::discover::Error),
     #[error(transparent)]
     GixDecode(#[from] gix::worktree::object::decode::Error),
     #[error(transparent)]
+    GixFindExisting(#[from] gix::object::find::existing::Error),
+    #[error(transparent)]
+    GixObjectCommit(#[from] gix::object::commit::Error),
+    #[error(transparent)]
+    GixObjectWrite(#[from] gix::object::write::Error),
+    #[error(transparent)]
     GixRef(#[from] gix::reference::iter::Error),
     #[error(transparent)]
     GixRefInit(#[from] gix::reference::iter::init::Error),
+    #[error(transparent)]
+    GixReferenceHeadId(#[from] gix::reference::head_id::Error),
     #[error(transparent)]
     GixHeadCommit(#[from] gix::reference::head_commit::Error),
     #[error(transparent)]

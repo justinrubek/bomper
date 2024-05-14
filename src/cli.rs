@@ -1,3 +1,5 @@
+use bomper::error::Result;
+use bomper::versioning::{determine_increment, Commit, VersionIncrement};
 use clap::Parser;
 use std::path::PathBuf;
 
@@ -25,6 +27,8 @@ pub(crate) enum Commands {
     RawBump(RawBump),
     /// bump versions in files and commit the changes
     Bump(Bump),
+    /// generate a changelog
+    Changelog(Changelog),
 }
 
 #[derive(clap::Args, Debug)]
@@ -40,6 +44,19 @@ pub(crate) struct Bump {
 }
 
 #[derive(clap::Args, Debug)]
+pub(crate) struct Changelog {
+    #[clap(flatten)]
+    pub options: BumpOptions,
+    /// output the changelog in plain style, with no decorations.
+    #[arg(short, long)]
+    pub no_decorations: bool,
+    /// only include entries for commits since the last version.
+    /// only valid when `no_decorations` is set.
+    #[arg(short, long, requires = "no_decorations")]
+    pub only_current_version: bool,
+}
+
+#[derive(clap::Args, Debug)]
 #[command(group = clap::ArgGroup::new("bump-type").required(true))]
 pub(crate) struct BumpOptions {
     #[arg(short, long, group = "bump-type")]
@@ -52,4 +69,24 @@ pub(crate) struct BumpOptions {
     pub minor: bool,
     #[arg(short, long, group = "bump-type")]
     pub patch: bool,
+}
+
+impl BumpOptions {
+    pub(crate) fn determine_increment<'a, I: IntoIterator<Item = &'a Commit>>(
+        &self,
+        commits: I,
+        current_version: &semver::Version,
+    ) -> Result<VersionIncrement> {
+        match &self.version {
+            Some(version) => Ok(VersionIncrement::Manual(semver::Version::parse(version)?)),
+            None if self.automatic => {
+                let conventional_commits = commits.into_iter().map(|c| c.as_ref());
+                Ok(determine_increment(conventional_commits, current_version))
+            }
+            None if self.major => Ok(VersionIncrement::Major),
+            None if self.minor => Ok(VersionIncrement::Minor),
+            None if self.patch => Ok(VersionIncrement::Patch),
+            _ => unreachable!(),
+        }
+    }
 }

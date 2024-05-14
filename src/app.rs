@@ -13,6 +13,7 @@ use bomper::{
     },
 };
 use console::{style, Style};
+use gix::refs::transaction::PreviousValue;
 use similar::{ChangeTag, TextDiff};
 use std::{fmt, io::Write, path::PathBuf};
 
@@ -57,12 +58,13 @@ impl App {
         if let Some(changes) = apply_changes(file_changes, &self.args)? {
             let new_tree = prepare_commit(&repo, changes)?;
             let object_id = repo.write_object(&new_tree)?;
-            repo.commit(
+            let commit = repo.commit(
                 "HEAD",
                 format!("chore(version): {new_version}"),
                 object_id,
                 vec![repo.head_id()?],
             )?;
+            repo.tag_reference(new_version.to_string(), commit, PreviousValue::MustNotExist)?;
         }
 
         Ok(())

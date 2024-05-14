@@ -37,6 +37,8 @@ pub enum Error {
     #[error(transparent)]
     GixRefInit(#[from] gix::reference::iter::init::Error),
     #[error(transparent)]
+    GixRefEdit(#[from] gix::reference::edit::Error),
+    #[error(transparent)]
     GixReferenceHeadId(#[from] gix::reference::head_id::Error),
     #[error(transparent)]
     GixHeadCommit(#[from] gix::reference::head_commit::Error),

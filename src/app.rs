@@ -7,7 +7,9 @@ use bomper::{
         cargo::CargoReplacer, file::FileReplacer, search::SearchReplacer, simple::SimpleReplacer,
         Replacer, VersionReplacement,
     },
-    versioning::{get_commits_since_tag, get_latest_tag, increment_version},
+    versioning::{
+        get_commits_between_tags, get_commits_since_tag, get_latest_tag, increment_version, Tag,
+    },
 };
 use console::{style, Style};
 use gix::refs::transaction::PreviousValue;
@@ -59,25 +61,46 @@ impl App {
 
     pub fn changelog(&self, opts: &Changelog) -> Result<()> {
         let repo = gix::discover(".")?;
-        let tag = get_latest_tag(&repo)?;
-        let commits = get_commits_since_tag(&repo, &tag)?;
-        let increment = opts.options.determine_increment(&commits, &tag.version)?;
-        let new_version = increment_version(tag.version.clone(), increment);
-        let changelog_entry = generate_changelog_entry(&commits, &new_version);
-        let path = std::path::PathBuf::from("CHANGELOG.md");
-        if opts.no_decorations {
-            match opts.only_current_version {
-                true => println!("{}", changelog_entry),
-                false => {
+        match &opts.at {
+            Some(version) => {
+                let mut tags = Tag::get_version_tags(&repo)?;
+                tags.sort();
+                tags.reverse();
+                let version_range = tags
+                    .windows(2)
+                    .find(|tags| {
+                        let [first, _] = tags else { unreachable!() };
+                        first.version.eq(version)
+                    })
+                    .ok_or_else(|| Error::VersionNotFound(version.clone()))?;
+                let commits =
+                    get_commits_between_tags(&repo, &version_range[1], &version_range[0])?;
+                let changelog_entry = generate_changelog_entry(&commits, version);
+                println!("{}", changelog_entry);
+            }
+            None => {
+                let tag = get_latest_tag(&repo)?;
+                let commits = get_commits_since_tag(&repo, &tag)?;
+                let increment = opts.options.determine_increment(&commits, &tag.version)?;
+                let new_version = increment_version(tag.version.clone(), increment);
+                let changelog_entry = generate_changelog_entry(&commits, &new_version);
+                let path = std::path::PathBuf::from("CHANGELOG.md");
+                if opts.no_decorations {
+                    match opts.only_current_version {
+                        true => println!("{}", changelog_entry),
+                        false => {
+                            let new_changelog = create_changelog(&path, &changelog_entry)?;
+                            println!("{}", new_changelog);
+                        }
+                    }
+                } else {
+                    let old_changelog = std::fs::read_to_string(&path).unwrap_or_default();
                     let new_changelog = create_changelog(&path, &changelog_entry)?;
-                    println!("{}", new_changelog);
+                    print_diff(old_changelog, new_changelog, path.display().to_string());
                 }
             }
-        } else {
-            let old_changelog = std::fs::read_to_string(&path).unwrap_or_default();
-            let new_changelog = create_changelog(&path, &changelog_entry)?;
-            print_diff(old_changelog, new_changelog, path.display().to_string());
         }
+
         Ok(())
     }
 

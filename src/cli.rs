@@ -45,9 +45,6 @@ pub(crate) struct Bump {
 
 #[derive(clap::Args, Debug)]
 pub(crate) struct Changelog {
-    #[clap(flatten)]
-    pub options: BumpOptions,
-
     /// the version to start generate the changelog for.
     #[arg(long)]
     pub at: Option<semver::Version>,

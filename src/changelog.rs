@@ -8,6 +8,7 @@ const TEMPLATE: &str = include_str!("templates/changelog_entry.md");
 pub struct ChangelogEntry<'a> {
     pub version: &'a str,
     pub commits: HashMap<String, Vec<ChangelogCommit>>,
+    pub description: Option<String>,
 }
 
 #[derive(Clone, Debug, serde::Serialize)]
@@ -37,6 +38,7 @@ pub fn display_commit_type(commit_type: &CommitType) -> String {
 pub fn generate_changelog_entry<'a, I: IntoIterator<Item = &'a Commit>>(
     commits: I,
     version: &str,
+    description: Option<String>,
 ) -> String {
     let mut env = minijinja::Environment::new();
     env.add_template("changelog_entry", TEMPLATE).unwrap();
@@ -56,6 +58,7 @@ pub fn generate_changelog_entry<'a, I: IntoIterator<Item = &'a Commit>>(
     let entry = ChangelogEntry {
         version,
         commits: typed_commits,
+        description,
     };
 
     let template = env.get_template("changelog_entry").unwrap();

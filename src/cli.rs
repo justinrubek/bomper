@@ -41,6 +41,10 @@ pub(crate) struct RawBump {
 pub(crate) struct Bump {
     #[clap(flatten)]
     pub options: BumpOptions,
+
+    /// Whether to prompt for a hand-written summary message
+    #[arg(short, long)]
+    pub description: bool,
 }
 
 #[derive(clap::Args, Debug)]

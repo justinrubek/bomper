@@ -14,7 +14,7 @@ use bomper::{
 use console::{style, Style};
 use gix::refs::transaction::PreviousValue;
 use similar::{ChangeTag, TextDiff};
-use std::{fmt, io::Write, path::PathBuf};
+use std::{fmt, io::Write, path::PathBuf, process::Command};
 
 pub struct App {
     pub args: BaseArgs,
@@ -36,7 +36,19 @@ impl App {
 
         let increment = opts.options.determine_increment(&commits, &tag.version)?;
         let new_version = increment_version(tag.version.clone(), increment);
-        let changelog_entry = generate_changelog_entry(&commits, &new_version.to_string());
+        let version_description = if opts.description {
+            match prompt_for_description()? {
+                Some(description) => Some(description),
+                None => {
+                    println!("Aborting bump due to empty description");
+                    return Ok(());
+                }
+            }
+        } else {
+            None
+        };
+        let changelog_entry =
+            generate_changelog_entry(&commits, &new_version.to_string(), version_description);
 
         let replacement = VersionReplacement {
             old_version: tag.version.to_string(),
@@ -75,13 +87,14 @@ impl App {
                     .ok_or_else(|| Error::VersionNotFound(version.clone()))?;
                 let commits =
                     get_commits_between_tags(&repo, &version_range[1], &version_range[0])?;
-                let changelog_entry = generate_changelog_entry(&commits, &version.to_string());
+                let changelog_entry =
+                    generate_changelog_entry(&commits, &version.to_string(), None);
                 println!("{}", changelog_entry);
             }
             None => {
                 let tag = get_latest_tag(&repo)?;
                 let commits = get_commits_since_tag(&repo, &tag)?;
-                let changelog_entry = generate_changelog_entry(&commits, "unreleased");
+                let changelog_entry = generate_changelog_entry(&commits, "unreleased", None);
                 let path = std::path::PathBuf::from("CHANGELOG.md");
                 if opts.no_decorations {
                     match opts.only_current_version {
@@ -322,6 +335,41 @@ fn print_diff(original: String, new: String, context: String) {
                     println!();
                 }
             }
+        }
+    }
+}
+
+const DESCRIPTION_HELP: &[u8] = br#"
+# Please enter a description for this version change"
+# All lines starting with '#' will be ignored
+# The contents of this file will be inserted into the changelog markdown"#;
+
+fn prompt_for_description() -> Result<Option<String>> {
+    let mut file = tempfile::NamedTempFile::new_in(".")?;
+    file.write_all(DESCRIPTION_HELP)?;
+
+    let editor = std::env::var("EDITOR").map_err(|_| Error::EditorNotSet)?;
+    Command::new(editor)
+        .arg(file.path())
+        .status()
+        .expect("failed to edit changelog description file");
+
+    let description = std::fs::read_to_string(file.path())?;
+    let description = description
+        .lines()
+        .filter(|line| !line.trim().starts_with('#'))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    if description.is_empty() {
+        Ok(None)
+    } else {
+        // check if the file only contains whitespace
+        let description = description.trim();
+        if description.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(description.to_string()))
         }
     }
 }

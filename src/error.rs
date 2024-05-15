@@ -55,6 +55,8 @@ pub enum Error {
     #[error("invalid toml: {0}")]
     TomlDeserialize(#[from] toml::de::Error),
 
+    #[error("EDITOR environment variable not set")]
+    EditorNotSet,
     #[error("invalid replacement count: {0}")]
     InvalidReplacementCount(usize),
     #[error("invalid cargo.toml: {0}")]

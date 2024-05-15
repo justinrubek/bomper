@@ -5,8 +5,8 @@ use std::collections::HashMap;
 const TEMPLATE: &str = include_str!("templates/changelog_entry.md");
 
 #[derive(Debug, serde::Serialize)]
-pub struct ChangelogEntry {
-    pub version: String,
+pub struct ChangelogEntry<'a> {
+    pub version: &'a str,
     pub commits: HashMap<String, Vec<ChangelogCommit>>,
 }
 
@@ -36,7 +36,7 @@ pub fn display_commit_type(commit_type: &CommitType) -> String {
 
 pub fn generate_changelog_entry<'a, I: IntoIterator<Item = &'a Commit>>(
     commits: I,
-    version: &semver::Version,
+    version: &str,
 ) -> String {
     let mut env = minijinja::Environment::new();
     env.add_template("changelog_entry", TEMPLATE).unwrap();
@@ -54,7 +54,7 @@ pub fn generate_changelog_entry<'a, I: IntoIterator<Item = &'a Commit>>(
             acc
         });
     let entry = ChangelogEntry {
-        version: version.to_string(),
+        version,
         commits: typed_commits,
     };
 

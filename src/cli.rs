@@ -47,6 +47,11 @@ pub(crate) struct Bump {
 pub(crate) struct Changelog {
     #[clap(flatten)]
     pub options: BumpOptions,
+
+    /// the version to start generate the changelog for.
+    #[arg(long)]
+    pub at: Option<semver::Version>,
+
     /// output the changelog in plain style, with no decorations.
     #[arg(short, long)]
     pub no_decorations: bool,

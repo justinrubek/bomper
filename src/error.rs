@@ -63,6 +63,8 @@ pub enum Error {
     ProjectBaseDirectory,
     #[error("unable to determine the most recent tag")]
     TagError,
+    #[error("version '{0}' was not found")]
+    VersionNotFound(semver::Version),
     #[error("changelog does not contain marker character")]
     ChangelogMarker,
 }

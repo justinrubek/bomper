@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::error::{Error, Result};
 use conventional_commit_parser::commit::{CommitType, ConventionalCommit};
 
@@ -25,6 +27,26 @@ impl PartialEq for Tag {
     }
 }
 
+impl Tag {
+    pub fn get_version_tags(repo: &gix::Repository) -> Result<Vec<Tag>> {
+        // TODO: should we only look for tags that are from the current branch?
+        // TODO: should we ignore tags that are not semver?
+        let references = repo.references()?;
+        let tags = references.tags()?;
+        let tags = tags
+            .filter_map(|tag| {
+                let tag = tag.ok()?;
+                let name = tag.name().shorten().to_string();
+                let version = semver::Version::parse(&name).unwrap();
+                let commit_id = tag.id().into();
+                Some(Tag { version, commit_id })
+            })
+            .collect();
+
+        Ok(tags)
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Commit {
     pub commit_id: gix::ObjectId,
@@ -47,22 +69,24 @@ pub enum VersionIncrement {
 }
 
 pub fn get_latest_tag(repo: &gix::Repository) -> Result<Tag> {
-    // TODO: should we only look for tags that are from the current branch?
-    // TODO: should we ignore tags that are not semver?
-    let references = repo.references()?;
-    let tags = references.tags()?;
-    let tag = tags
-        .filter_map(|tag| {
-            let tag = tag.ok()?;
-            let name = tag.name().shorten().to_string();
-            let version = semver::Version::parse(&name).unwrap();
-            let commit_id = tag.id().into();
-            Some(Tag { version, commit_id })
-        })
+    let tag = Tag::get_version_tags(repo)?
+        .into_iter()
         .max()
         .ok_or_else(|| Error::TagError)?;
-
     Ok(tag)
+}
+
+pub fn get_tags(
+    repo: &gix::Repository,
+    versions: &[semver::Version],
+) -> Result<HashMap<semver::Version, Tag>> {
+    let tags = Tag::get_version_tags(repo)?;
+    let tags = tags
+        .into_iter()
+        .filter(|tag| versions.contains(&tag.version))
+        .map(|tag| (tag.version.clone(), tag))
+        .collect();
+    Ok(tags)
 }
 
 pub fn get_commits_since_tag(repo: &gix::Repository, tag: &Tag) -> Result<Vec<Commit>> {
@@ -73,6 +97,38 @@ pub fn get_commits_since_tag(repo: &gix::Repository, tag: &Tag) -> Result<Vec<Co
         let commit = commit.unwrap();
         let object = commit.object().unwrap();
         if commit.id() == tag.commit_id {
+            break;
+        }
+        let message = object.message().unwrap();
+        let mut full_message = String::new();
+        full_message.push_str(message.title.to_string().trim());
+        if let Some(body) = message.body {
+            full_message.push_str("\n\n");
+            full_message.push_str(&body.to_string());
+        }
+        let parsed = conventional_commit_parser::parse(&full_message)?;
+        parsed_commits.push(Commit {
+            commit_id: commit.id().into(),
+            conventional_commit: parsed,
+            signature: object.author().to_owned()?.into(),
+        });
+    }
+
+    Ok(parsed_commits)
+}
+
+pub fn get_commits_between_tags(
+    repo: &gix::Repository,
+    from: &Tag,
+    to: &Tag,
+) -> Result<Vec<Commit>> {
+    let start = repo.find_object(to.commit_id)?.into_commit();
+    let ancestors = start.ancestors();
+    let mut parsed_commits = Vec::new();
+    for commit in ancestors.all()? {
+        let commit = commit.unwrap();
+        let object = commit.object().unwrap();
+        if commit.id() == from.commit_id {
             break;
         }
         let message = object.message().unwrap();

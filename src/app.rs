@@ -147,7 +147,7 @@ fn apply_changes(changes: Vec<FileReplacer>, args: &BaseArgs) -> Result<Option<V
     if args.dry_run {
         println!("Dry run, not persisting changes");
         for replacer in changes {
-            let original = std::fs::read_to_string(&replacer.path)?;
+            let original = std::fs::read_to_string(&replacer.path).unwrap_or_default();
             let new = std::fs::read_to_string(&replacer.temp_file)?;
 
             print_diff(original, new, replacer.path.display().to_string())

@@ -231,14 +231,23 @@ pub fn increment_version(
         VersionIncrement::Manual(version) => version,
         VersionIncrement::Major => {
             version.major += 1;
+            version.minor = 0;
+            version.patch = 0;
+            version.build = semver::BuildMetadata::EMPTY;
+            version.pre = semver::Prerelease::EMPTY;
             version
         }
         VersionIncrement::Minor => {
             version.minor += 1;
+            version.patch = 0;
+            version.build = semver::BuildMetadata::EMPTY;
+            version.pre = semver::Prerelease::EMPTY;
             version
         }
         VersionIncrement::Patch => {
             version.patch += 1;
+            version.build = semver::BuildMetadata::EMPTY;
+            version.pre = semver::Prerelease::EMPTY;
             version
         }
     }

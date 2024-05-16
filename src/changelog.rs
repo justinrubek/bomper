@@ -1,4 +1,4 @@
-use crate::versioning::Commit;
+use crate::{error::Result, versioning::Commit};
 use conventional_commit_parser::commit::CommitType;
 use std::collections::HashMap;
 
@@ -11,7 +11,7 @@ pub struct ChangelogEntry<'a> {
     pub description: Option<String>,
 }
 
-#[derive(Clone, Debug, serde::Serialize)]
+#[derive(Clone, Debug)]
 pub struct ChangelogCommit {
     pub scope: Option<String>,
     pub summary: String,
@@ -56,12 +56,19 @@ pub fn display_commit_type(commit_type: &CommitType) -> String {
 }
 
 pub fn generate_changelog_entry<'a, I: IntoIterator<Item = &'a Commit>>(
+    repo: &gix::Repository,
     commits: I,
     version: &str,
     description: Option<String>,
-) -> String {
+) -> Result<String> {
     let mut env = minijinja::Environment::new();
     env.add_template("changelog_entry", TEMPLATE).unwrap();
+
+    let url = gix_repo_url(repo)?;
+    let version = match &url {
+        Some(url) => &format!("[{version}]({url}/releases/tag/{version})"),
+        None => version,
+    };
 
     let typed_commits: HashMap<String, Vec<ChangelogCommit>> =
         commits.into_iter().fold(HashMap::new(), |mut acc, commit| {
@@ -87,5 +94,24 @@ pub fn generate_changelog_entry<'a, I: IntoIterator<Item = &'a Commit>>(
         .render(minijinja::context!(
             entry => entry,
         ))
-        .unwrap()
+        .map_err(Into::into)
+}
+
+fn gix_repo_url(repo: &gix::Repository) -> Result<Option<String>> {
+    let remote = match repo.find_default_remote(gix::remote::Direction::Push) {
+        Some(remote) => remote?,
+        None => return Ok(None),
+    };
+
+    match remote.url(gix::remote::Direction::Push) {
+        Some(url) => {
+            let host = url.host_argument_safe();
+            let path = url.path_argument_safe();
+            match (host, path) {
+                (Some(host), Some(path)) => Ok(Some(format!("https://{host}/{path}"))),
+                _ => Ok(None),
+            }
+        }
+        None => Ok(None),
+    }
 }

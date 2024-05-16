@@ -60,13 +60,14 @@ pub fn generate_changelog_entry<'a, I: IntoIterator<Item = &'a Commit>>(
     commits: I,
     version: &str,
     description: Option<String>,
+    authors: &Option<HashMap<String, String>>,
 ) -> Result<String> {
     let mut env = minijinja::Environment::new();
     env.add_template("changelog_entry", TEMPLATE).unwrap();
 
     let url = gix_repo_url(repo)?;
     let version = match &url {
-        Some(url) => &format!("[{version}]({url}/releases/tag/{version})"),
+        Some((host, path)) => &format!("[{version}](https://{host}/{path}/releases/tag/{version})"),
         None => version,
     };
 
@@ -74,11 +75,21 @@ pub fn generate_changelog_entry<'a, I: IntoIterator<Item = &'a Commit>>(
         commits.into_iter().fold(HashMap::new(), |mut acc, commit| {
             let key = display_commit_type(&commit.conventional_commit.commit_type);
             let entry = acc.entry(key).or_default();
+            let author = author_name(commit.signature.name.to_string(), authors, &url);
+            let commit_id = commit.commit_id.to_string();
+            let hash = match &url {
+                Some((host, path)) => format!(
+                    "[{}](https://{host}/{path}/commit/{commit_id})",
+                    &commit_id[..7]
+                ),
+                None => commit_id,
+            };
+
             let commit = ChangelogCommit {
                 scope: commit.conventional_commit.scope.clone(),
                 summary: commit.conventional_commit.summary.clone(),
-                hash: commit.commit_id.to_string(),
-                author: commit.signature.name.to_string(),
+                hash,
+                author,
             };
             entry.push(commit);
             acc
@@ -97,7 +108,7 @@ pub fn generate_changelog_entry<'a, I: IntoIterator<Item = &'a Commit>>(
         .map_err(Into::into)
 }
 
-fn gix_repo_url(repo: &gix::Repository) -> Result<Option<String>> {
+fn gix_repo_url(repo: &gix::Repository) -> Result<Option<(String, String)>> {
     let remote = match repo.find_default_remote(gix::remote::Direction::Push) {
         Some(remote) => remote?,
         None => return Ok(None),
@@ -108,10 +119,31 @@ fn gix_repo_url(repo: &gix::Repository) -> Result<Option<String>> {
             let host = url.host_argument_safe();
             let path = url.path_argument_safe();
             match (host, path) {
-                (Some(host), Some(path)) => Ok(Some(format!("https://{host}/{path}"))),
+                (Some(host), Some(path)) => Ok(Some((host.to_string(), path.to_string()))),
                 _ => Ok(None),
             }
         }
         None => Ok(None),
+    }
+}
+
+fn author_name(
+    commit_author: String,
+    authors: &Option<HashMap<String, String>>,
+    url: &Option<(String, String)>,
+) -> String {
+    match url {
+        Some((host, _)) => {
+            if let Some(authors) = authors {
+                authors
+                    .get(&commit_author)
+                    .cloned()
+                    .map(|author| format!("[@{author}](https://{host}/{author})"))
+                    .unwrap_or(commit_author)
+            } else {
+                commit_author
+            }
+        }
+        None => commit_author,
     }
 }

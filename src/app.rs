@@ -52,6 +52,7 @@ impl App {
             &commits,
             &new_version.to_string(),
             version_description,
+            &self.config.authors,
         )?;
 
         let replacement = VersionReplacement {
@@ -91,15 +92,25 @@ impl App {
                     .ok_or_else(|| Error::VersionNotFound(version.clone()))?;
                 let commits =
                     get_commits_between_tags(&repo, &version_range[1], &version_range[0])?;
-                let changelog_entry =
-                    generate_changelog_entry(&repo, &commits, &version.to_string(), None)?;
+                let changelog_entry = generate_changelog_entry(
+                    &repo,
+                    &commits,
+                    &version.to_string(),
+                    None,
+                    &self.config.authors,
+                )?;
                 println!("{}", changelog_entry);
             }
             None => {
                 let tag = get_latest_tag(&repo)?;
                 let commits = get_commits_since_tag(&repo, &tag)?;
-                let changelog_entry =
-                    generate_changelog_entry(&repo, &commits, "unreleased", None)?;
+                let changelog_entry = generate_changelog_entry(
+                    &repo,
+                    &commits,
+                    "unreleased",
+                    None,
+                    &self.config.authors,
+                )?;
                 let path = std::path::PathBuf::from("CHANGELOG.md");
                 if opts.no_decorations {
                     match opts.only_current_version {

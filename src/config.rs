@@ -16,6 +16,8 @@ pub struct Config {
     pub by_file: Option<HashMap<PathBuf, FileTableData>>,
     #[serde(default)]
     pub cargo: Option<CargoReplaceMode>,
+    /// mapping of commit author to GitHub username
+    pub authors: Option<HashMap<String, String>>,
 }
 
 impl Config {

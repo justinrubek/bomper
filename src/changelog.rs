@@ -13,9 +13,29 @@ pub struct ChangelogEntry<'a> {
 
 #[derive(Clone, Debug, serde::Serialize)]
 pub struct ChangelogCommit {
+    pub scope: Option<String>,
     pub summary: String,
     pub hash: String,
     pub author: String,
+}
+
+impl std::fmt::Display for ChangelogCommit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.scope {
+            Some(ref scope) => write!(
+                f,
+                "**({0})** {1} - ({2}) - {3}",
+                scope, self.summary, self.hash, self.author
+            ),
+            None => write!(f, "{0} - ({1}) - {2}", self.summary, self.hash, self.author),
+        }
+    }
+}
+
+impl serde::Serialize for ChangelogCommit {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_str(self)
+    }
 }
 
 pub fn display_commit_type(commit_type: &CommitType) -> String {
@@ -48,6 +68,7 @@ pub fn generate_changelog_entry<'a, I: IntoIterator<Item = &'a Commit>>(
             let key = display_commit_type(&commit.conventional_commit.commit_type);
             let entry = acc.entry(key).or_default();
             let commit = ChangelogCommit {
+                scope: commit.conventional_commit.scope.clone(),
                 summary: commit.conventional_commit.summary.clone(),
                 hash: commit.commit_id.to_string(),
                 author: commit.signature.name.to_string(),

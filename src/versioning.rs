@@ -7,6 +7,7 @@ use conventional_commit_parser::commit::{CommitType, ConventionalCommit};
 pub struct Tag {
     pub commit_id: gix::ObjectId,
     pub version: semver::Version,
+    pub prefix_v: bool,
 }
 
 impl Ord for Tag {
@@ -28,6 +29,24 @@ impl PartialEq for Tag {
 }
 
 impl Tag {
+    /// Returns the version of the tag as a string.
+    /// If the tag is prefixed with a 'v', the 'v' is included in the string.
+    pub fn version(&self) -> String {
+        if self.prefix_v {
+            format!("v{}", self.version)
+        } else {
+            self.version.to_string()
+        }
+    }
+
+    /// Create a new `Tag` with the version incremented by the given increment.
+    /// Note: this does not change the commit id, only the version.
+    pub fn increment_version(&self, increment: VersionIncrement) -> Self {
+        let mut new = self.clone();
+        new.version = increment_version(self.version.clone(), increment);
+        new
+    }
+
     pub fn get_version_tags(repo: &gix::Repository) -> Result<Vec<Tag>> {
         // TODO: should we only look for tags that are from the current branch?
         // TODO: should we ignore tags that are not semver?
@@ -37,9 +56,17 @@ impl Tag {
             .filter_map(|tag| {
                 let tag = tag.ok()?;
                 let name = tag.name().shorten().to_string();
-                let version = semver::Version::parse(&name).unwrap();
+                let (version, prefix_v) = if let Some(stripped) = name.strip_prefix("v") {
+                    (semver::Version::parse(stripped).unwrap(), true)
+                } else {
+                    (semver::Version::parse(&name).unwrap(), false)
+                };
                 let commit_id = tag.id().into();
-                Some(Tag { version, commit_id })
+                Some(Tag {
+                    version,
+                    commit_id,
+                    prefix_v,
+                })
             })
             .collect();
 

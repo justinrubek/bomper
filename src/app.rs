@@ -7,9 +7,7 @@ use bomper::{
         cargo::CargoReplacer, file::FileReplacer, search::SearchReplacer, simple::SimpleReplacer,
         Replacer, VersionReplacement,
     },
-    versioning::{
-        get_commits_between_tags, get_commits_since_tag, get_latest_tag, increment_version, Tag,
-    },
+    versioning::{get_commits_between_tags, get_commits_since_tag, get_latest_tag, Tag},
 };
 use console::{style, Style};
 use gix::refs::transaction::PreviousValue;
@@ -35,7 +33,7 @@ impl App {
         let commits = get_commits_since_tag(&repo, &tag)?;
 
         let increment = opts.options.determine_increment(&commits, &tag.version)?;
-        let new_version = increment_version(tag.version.clone(), increment);
+        let new_tag = tag.increment_version(increment);
         let version_description = if opts.description {
             match prompt_for_description()? {
                 Some(description) => Some(description),
@@ -47,17 +45,18 @@ impl App {
         } else {
             None
         };
+        let new_version_string = new_tag.version();
         let changelog_entry = generate_changelog_entry(
             &repo,
             &commits,
-            &new_version.to_string(),
+            &new_version_string,
             version_description,
             &self.config.authors,
         )?;
 
         let replacement = VersionReplacement {
             old_version: tag.version.to_string(),
-            new_version: new_version.to_string(),
+            new_version: new_tag.version.to_string(),
         };
         let mut file_changes = determine_changes(&self.config, &replacement)?;
         file_changes.push(apply_changelog(changelog_entry)?);
@@ -66,11 +65,11 @@ impl App {
             let object_id = repo.write_object(&new_tree)?;
             let commit = repo.commit(
                 "HEAD",
-                format!("chore(version): {new_version}"),
+                format!("chore(version): {}", new_tag.version),
                 object_id,
                 vec![repo.head_id()?],
             )?;
-            repo.tag_reference(new_version.to_string(), commit, PreviousValue::MustNotExist)?;
+            repo.tag_reference(new_version_string, commit, PreviousValue::MustNotExist)?;
         }
 
         Ok(())

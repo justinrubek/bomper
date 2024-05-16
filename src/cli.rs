@@ -19,6 +19,9 @@ pub(crate) struct BaseArgs {
     pub config_file: Option<PathBuf>,
     #[arg(short, long)]
     pub dry_run: bool,
+    /// the directory of the repository to run on.
+    #[arg(short, long)]
+    pub repository: Option<PathBuf>,
 }
 
 #[derive(clap::Subcommand, Debug)]

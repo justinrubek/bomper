@@ -20,8 +20,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let project = project_base_directory::Project::discover()
         .map_err(|_| bomper::error::Error::ProjectBaseDirectory)?;
     tracing::debug!(?project);
-    if let Some(base_directory) = project.root_directory {
-        std::env::set_current_dir(base_directory)?;
+    match args.base_args.repository {
+        Some(ref repo) => {
+            std::env::set_current_dir(repo)?;
+        }
+        None => {
+            if let Some(base_directory) = project.root_directory {
+                std::env::set_current_dir(base_directory)?;
+            }
+        }
     }
 
     let config_path = match &args.base_args.config_file {

@@ -5,6 +5,9 @@ _: {
       configuration = ''
         (
             cargo: Some(Autodetect),
+            authors: Some({
+                "Justin Rubek": "justinrubek"
+            }),
         )
       '';
     };

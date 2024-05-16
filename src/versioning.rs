@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::error::{Error, Result};
+use crate::error::Result;
 use conventional_commit_parser::commit::{CommitType, ConventionalCommit};
 
 #[derive(Clone, Debug, Eq)]
@@ -95,11 +95,8 @@ pub enum VersionIncrement {
     Patch,
 }
 
-pub fn get_latest_tag(repo: &gix::Repository) -> Result<Tag> {
-    let tag = Tag::get_version_tags(repo)?
-        .into_iter()
-        .max()
-        .ok_or_else(|| Error::TagError)?;
+pub fn get_latest_tag(repo: &gix::Repository) -> Result<Option<Tag>> {
+    let tag = Tag::get_version_tags(repo)?.into_iter().max();
     Ok(tag)
 }
 
@@ -126,6 +123,31 @@ pub fn get_commits_since_tag(repo: &gix::Repository, tag: &Tag) -> Result<Vec<Co
         if commit.id() == tag.commit_id {
             break;
         }
+        let message = object.message().unwrap();
+        let mut full_message = String::new();
+        full_message.push_str(message.title.to_string().trim());
+        if let Some(body) = message.body {
+            full_message.push_str("\n\n");
+            full_message.push_str(&body.to_string());
+        }
+        let parsed = conventional_commit_parser::parse(&full_message)?;
+        parsed_commits.push(Commit {
+            commit_id: commit.id().into(),
+            conventional_commit: parsed,
+            signature: object.author().to_owned()?.into(),
+        });
+    }
+
+    Ok(parsed_commits)
+}
+
+pub fn get_commits_since_initial_commit(repo: &gix::Repository) -> Result<Vec<Commit>> {
+    let head = repo.head_commit()?;
+    let ancestors = head.ancestors();
+    let mut parsed_commits = Vec::new();
+    for commit in ancestors.all()? {
+        let commit = commit.unwrap();
+        let object = commit.object().unwrap();
         let message = object.message().unwrap();
         let mut full_message = String::new();
         full_message.push_str(message.title.to_string().trim());

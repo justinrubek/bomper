@@ -7,7 +7,7 @@ use bomper::{
         cargo::CargoReplacer, file::FileReplacer, search::SearchReplacer, simple::SimpleReplacer,
         Replacer, VersionReplacement,
     },
-    versioning::{get_commits_between_tags, get_commits_since_tag, get_latest_tag, Tag},
+    versioning::{get_commits_between_tags, get_commits_since_tag, get_latest_tag, Commit, Tag},
 };
 use console::{style, Style};
 use gix::refs::transaction::PreviousValue;
@@ -29,8 +29,7 @@ impl App {
     pub fn bump(&self, opts: &Bump) -> Result<()> {
         let repo = gix::discover(".")?;
 
-        let tag = get_latest_tag(&repo)?;
-        let commits = get_commits_since_tag(&repo, &tag)?;
+        let (tag, commits) = changelog_commits(&repo)?;
 
         let increment = opts.options.determine_increment(&commits, &tag.version)?;
         let new_tag = tag.increment_version(increment);
@@ -101,8 +100,7 @@ impl App {
                 println!("{}", changelog_entry);
             }
             None => {
-                let tag = get_latest_tag(&repo)?;
-                let commits = get_commits_since_tag(&repo, &tag)?;
+                let (_, commits) = changelog_commits(&repo)?;
                 let changelog_entry = generate_changelog_entry(
                     &repo,
                     &commits,
@@ -387,4 +385,26 @@ fn prompt_for_description() -> Result<Option<String>> {
             Ok(Some(description.to_string()))
         }
     }
+}
+
+/// Retrieve all the commits that should be included in a new changelog entry.
+/// This will start at the current head commit and walk back to the latest tag.
+/// The latest tag is determined by the highest semver tag in the repository.
+/// If no tags are found, the root commit will be used as the starting point and a version of `0.0.0` will be used.
+fn changelog_commits(repo: &gix::Repository) -> Result<(Tag, Vec<Commit>)> {
+    let tag = match get_latest_tag(repo)? {
+        Some(tag) => tag,
+        None => {
+            let head = repo.head_commit()?;
+            let ancestors = head.ancestors();
+            let root_commit = ancestors.all()?.last();
+            Tag {
+                version: semver::Version::new(0, 0, 0),
+                commit_id: root_commit.unwrap().unwrap().id().into(),
+                prefix_v: false,
+            }
+        }
+    };
+    let commits = get_commits_since_tag(repo, &tag)?;
+    Ok((tag, commits))
 }

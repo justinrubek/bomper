@@ -41,15 +41,21 @@ pub enum Error {
     #[error(transparent)]
     GixReferenceHeadId(#[from] gix::reference::head_id::Error),
     #[error(transparent)]
+    GixRemoteFindExisting(#[from] gix::remote::find::existing::Error),
+    #[error(transparent)]
     GixHeadCommit(#[from] gix::reference::head_commit::Error),
     #[error(transparent)]
     GixWalk(#[from] gix::revision::walk::Error),
     #[error(transparent)]
     ConventialCommitParse(#[from] conventional_commit_parser::error::ParseError),
     #[error(transparent)]
+    MiniJinja(#[from] minijinja::Error),
+    #[error(transparent)]
     Other(#[from] anyhow::Error),
     #[error(transparent)]
     StdPathStripPrefix(#[from] std::path::StripPrefixError),
+    #[error(transparent)]
+    StdStrUtf8Error(#[from] std::str::Utf8Error),
     #[error("invalid version: {0}")]
     TomlSerialize(#[from] toml::ser::Error),
     #[error("invalid toml: {0}")]

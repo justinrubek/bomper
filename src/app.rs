@@ -47,8 +47,12 @@ impl App {
         } else {
             None
         };
-        let changelog_entry =
-            generate_changelog_entry(&commits, &new_version.to_string(), version_description);
+        let changelog_entry = generate_changelog_entry(
+            &repo,
+            &commits,
+            &new_version.to_string(),
+            version_description,
+        )?;
 
         let replacement = VersionReplacement {
             old_version: tag.version.to_string(),
@@ -88,13 +92,14 @@ impl App {
                 let commits =
                     get_commits_between_tags(&repo, &version_range[1], &version_range[0])?;
                 let changelog_entry =
-                    generate_changelog_entry(&commits, &version.to_string(), None);
+                    generate_changelog_entry(&repo, &commits, &version.to_string(), None)?;
                 println!("{}", changelog_entry);
             }
             None => {
                 let tag = get_latest_tag(&repo)?;
                 let commits = get_commits_since_tag(&repo, &tag)?;
-                let changelog_entry = generate_changelog_entry(&commits, "unreleased", None);
+                let changelog_entry =
+                    generate_changelog_entry(&repo, &commits, "unreleased", None)?;
                 let path = std::path::PathBuf::from("CHANGELOG.md");
                 if opts.no_decorations {
                     match opts.only_current_version {

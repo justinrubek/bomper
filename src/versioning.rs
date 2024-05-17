@@ -31,6 +31,7 @@ impl PartialEq for Tag {
 impl Tag {
     /// Returns the version of the tag as a string.
     /// If the tag is prefixed with a 'v', the 'v' is included in the string.
+    #[must_use]
     pub fn version(&self) -> String {
         if self.prefix_v {
             format!("v{}", self.version)
@@ -41,12 +42,16 @@ impl Tag {
 
     /// Create a new `Tag` with the version incremented by the given increment.
     /// Note: this does not change the commit id, only the version.
+    #[must_use]
     pub fn increment_version(&self, increment: VersionIncrement) -> Self {
         let mut new = self.clone();
         new.version = increment_version(self.version.clone(), increment);
         new
     }
 
+    /// # Errors
+    ///
+    /// - `gitoxide` is unable to read the repository references or tags
     pub fn get_version_tags(repo: &gix::Repository) -> Result<Vec<Tag>> {
         // TODO: should we only look for tags that are from the current branch?
         // TODO: should we ignore tags that are not semver?
@@ -57,14 +62,14 @@ impl Tag {
                 let tag = tag.ok()?;
                 let name = tag.name().shorten().to_string();
                 let (version, prefix_v) = if let Some(stripped) = name.strip_prefix("v") {
-                    (semver::Version::parse(stripped).unwrap(), true)
+                    (semver::Version::parse(stripped).ok()?, true)
                 } else {
-                    (semver::Version::parse(&name).unwrap(), false)
+                    (semver::Version::parse(&name).ok()?, false)
                 };
                 let commit_id = tag.id().into();
                 Some(Tag {
-                    version,
                     commit_id,
+                    version,
                     prefix_v,
                 })
             })
@@ -95,11 +100,17 @@ pub enum VersionIncrement {
     Patch,
 }
 
+/// # Errors
+///
+/// - `gitoxide` is unable to read the repository references or tags
 pub fn get_latest_tag(repo: &gix::Repository) -> Result<Option<Tag>> {
     let tag = Tag::get_version_tags(repo)?.into_iter().max();
     Ok(tag)
 }
 
+/// # Errors
+///
+/// - `gitoxide` is unable to read the repository references or tags
 pub fn get_tags(
     repo: &gix::Repository,
     versions: &[semver::Version],
@@ -113,17 +124,22 @@ pub fn get_tags(
     Ok(tags)
 }
 
+/// # Errors
+///
+/// - the repository has no commits
+/// - git HEAD is not a commit
+/// - `gitoxide` is unable to traverse the commit history
 pub fn get_commits_since_tag(repo: &gix::Repository, tag: &Tag) -> Result<Vec<Commit>> {
     let head = repo.head_commit()?;
     let ancestors = head.ancestors();
     let mut parsed_commits = Vec::new();
     for commit in ancestors.all()? {
-        let commit = commit.unwrap();
-        let object = commit.object().unwrap();
+        let commit = commit?;
+        let object = commit.object()?;
         if commit.id() == tag.commit_id {
             break;
         }
-        let message = object.message().unwrap();
+        let message = object.message()?;
         let mut full_message = String::new();
         full_message.push_str(message.title.to_string().trim());
         if let Some(body) = message.body {
@@ -134,21 +150,27 @@ pub fn get_commits_since_tag(repo: &gix::Repository, tag: &Tag) -> Result<Vec<Co
         parsed_commits.push(Commit {
             commit_id: commit.id().into(),
             conventional_commit: parsed,
-            signature: object.author().to_owned()?.into(),
+            signature: object.author()?.into(),
         });
     }
 
     Ok(parsed_commits)
 }
 
+/// # Errors
+///
+/// - the repository has no commits
+/// - git HEAD is not a commit
+/// - `gitoxide` is unable to traverse the commit history
+/// - a commit message is found that is not a valid conventional commit
 pub fn get_commits_since_initial_commit(repo: &gix::Repository) -> Result<Vec<Commit>> {
     let head = repo.head_commit()?;
     let ancestors = head.ancestors();
     let mut parsed_commits = Vec::new();
     for commit in ancestors.all()? {
-        let commit = commit.unwrap();
-        let object = commit.object().unwrap();
-        let message = object.message().unwrap();
+        let commit = commit?;
+        let object = commit.object()?;
+        let message = object.message()?;
         let mut full_message = String::new();
         full_message.push_str(message.title.to_string().trim());
         if let Some(body) = message.body {
@@ -159,13 +181,19 @@ pub fn get_commits_since_initial_commit(repo: &gix::Repository) -> Result<Vec<Co
         parsed_commits.push(Commit {
             commit_id: commit.id().into(),
             conventional_commit: parsed,
-            signature: object.author().to_owned()?.into(),
+            signature: object.author()?.into(),
         });
     }
 
     Ok(parsed_commits)
 }
 
+/// # Errors
+///
+/// - the repository has no commits
+/// - git HEAD is not a commit
+/// - `gitoxide` is unable to traverse the commit history
+/// - a commit message is found that is not a valid conventional commit
 pub fn get_commits_between_tags(
     repo: &gix::Repository,
     from: &Tag,
@@ -175,12 +203,12 @@ pub fn get_commits_between_tags(
     let ancestors = start.ancestors();
     let mut parsed_commits = Vec::new();
     for commit in ancestors.all()? {
-        let commit = commit.unwrap();
-        let object = commit.object().unwrap();
+        let commit = commit?;
+        let object = commit.object()?;
         if commit.id() == from.commit_id {
             break;
         }
-        let message = object.message().unwrap();
+        let message = object.message()?;
         let mut full_message = String::new();
         full_message.push_str(message.title.to_string().trim());
         if let Some(body) = message.body {
@@ -191,7 +219,7 @@ pub fn get_commits_between_tags(
         parsed_commits.push(Commit {
             commit_id: commit.id().into(),
             conventional_commit: parsed,
-            signature: object.author().to_owned()?.into(),
+            signature: object.author()?.into(),
         });
     }
 
@@ -223,6 +251,7 @@ pub fn determine_increment<'a, I: IntoIterator<Item = &'a ConventionalCommit>>(
     }
 }
 
+#[must_use]
 pub fn increment_version(
     mut version: semver::Version,
     increment: VersionIncrement,

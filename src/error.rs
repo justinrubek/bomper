@@ -43,6 +43,8 @@ pub enum Error {
     #[error(transparent)]
     GixRemoteFindExisting(#[from] gix::remote::find::existing::Error),
     #[error(transparent)]
+    GixTraverseCommitSimple(#[from] gix::traverse::commit::simple::Error),
+    #[error(transparent)]
     GixHeadCommit(#[from] gix::reference::head_commit::Error),
     #[error(transparent)]
     GixWalk(#[from] gix::revision::walk::Error),
@@ -79,7 +81,7 @@ pub enum Error {
 
 impl std::fmt::Debug for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self)
+        write!(f, "{self}")
     }
 }
 

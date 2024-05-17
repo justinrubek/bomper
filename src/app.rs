@@ -3,10 +3,7 @@ use bomper::{
     changelog::generate_changelog_entry,
     config::Config,
     error::{Error, Result},
-    replacers::{
-        cargo::CargoReplacer, file::FileReplacer, search::SearchReplacer, simple::SimpleReplacer,
-        Replacer, VersionReplacement,
-    },
+    replacers::{cargo, file, search, simple, ReplacementBuilder, VersionReplacement},
     versioning::{get_commits_between_tags, get_commits_since_tag, get_latest_tag, Commit, Tag},
 };
 use console::{style, Style};
@@ -143,7 +140,7 @@ impl App {
 /// Persist file changes to the filesystem.
 /// This function is responsible for respecting the `dry_run` flag, so it will only persist changes
 /// if the flag is not set.
-fn apply_changes(changes: Vec<FileReplacer>, args: &BaseArgs) -> Result<Option<Vec<PathBuf>>> {
+fn apply_changes(changes: Vec<file::Replacer>, args: &BaseArgs) -> Result<Option<Vec<PathBuf>>> {
     if args.dry_run {
         println!("Dry run, not persisting changes");
         for replacer in changes {
@@ -168,21 +165,21 @@ fn apply_changes(changes: Vec<FileReplacer>, args: &BaseArgs) -> Result<Option<V
 fn determine_changes(
     config: &Config,
     replacement: &VersionReplacement,
-) -> Result<Vec<FileReplacer>> {
+) -> Result<Vec<file::Replacer>> {
     let mut files_to_replace = Vec::new();
 
     let by_file = &config.by_file;
     if let Some(by_file) = by_file {
         for (path, config) in by_file {
             let mut replacers = match &config.search_value {
-                Some(value) => SearchReplacer::new(
+                Some(value) => search::Replacer::new(
                     path.clone(),
                     &replacement.old_version,
                     value,
                     &replacement.new_version,
                 )?
                 .determine_replacements()?,
-                None => SimpleReplacer::new(
+                None => simple::Replacer::new(
                     path.clone(),
                     &replacement.old_version,
                     &replacement.new_version,
@@ -199,7 +196,7 @@ fn determine_changes(
 
     let cargo_lock = &config.cargo;
     if let Some(cargo_lock) = cargo_lock {
-        let replacer = CargoReplacer::new(replacement.clone(), cargo_lock.clone())?;
+        let replacer = cargo::Replacer::new(replacement.clone(), cargo_lock.clone());
         let mut files = replacer.determine_replacements()?;
         if let Some(files) = &mut files {
             files_to_replace.append(files);
@@ -232,7 +229,7 @@ fn create_changelog(path: &std::path::Path, contents: &str) -> Result<String> {
     }
 }
 
-fn apply_changelog(entry: String) -> Result<FileReplacer> {
+fn apply_changelog(entry: String) -> Result<file::Replacer> {
     let path = std::path::PathBuf::from("CHANGELOG.md");
     let new_changelog = create_changelog(&path, &entry)?;
 
@@ -240,7 +237,7 @@ fn apply_changelog(entry: String) -> Result<FileReplacer> {
     let mut file = temp_file.as_file();
     file.write_all(new_changelog.as_bytes())?;
 
-    Ok(FileReplacer { path, temp_file })
+    Ok(file::Replacer { path, temp_file })
 }
 
 fn prepare_commit(

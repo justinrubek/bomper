@@ -1,3 +1,4 @@
+#![warn(clippy::pedantic)]
 #![allow(clippy::result_large_err)]
 pub mod changelog;
 pub mod config;

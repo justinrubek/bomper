@@ -1,16 +1,19 @@
 use memmap::{Mmap, MmapMut};
 use std::{fs, fs::File, io::prelude::*, ops::DerefMut, path::PathBuf};
 
-use super::{file::FileReplacer, Replacer};
+use super::{file, ReplacementBuilder};
 use crate::error::{Error, Result};
 
-pub struct SimpleReplacer {
+pub struct Replacer {
     path: PathBuf,
     new_data: Vec<u8>,
     regex: regex::bytes::Regex,
 }
 
-impl SimpleReplacer {
+impl Replacer {
+    /// # Errors
+    ///
+    /// - the regex expression compiled from `old_content` is larger than the default size limit of `regex::bytes::RegexBuilder`
     pub fn new(path: PathBuf, old_content: &str, new_content: &str) -> Result<Self> {
         let search_text = regex::escape(old_content);
         let regex = regex::bytes::RegexBuilder::new(&search_text).build()?;
@@ -23,8 +26,8 @@ impl SimpleReplacer {
     }
 }
 
-impl Replacer for SimpleReplacer {
-    fn determine_replacements(self) -> Result<Option<Vec<FileReplacer>>> {
+impl ReplacementBuilder for Replacer {
+    fn determine_replacements(self) -> Result<Option<Vec<file::Replacer>>> {
         let mut replacers = Vec::new();
 
         let source_file = File::open(&self.path)?;
@@ -32,12 +35,12 @@ impl Replacer for SimpleReplacer {
         let source_map = unsafe { Mmap::map(&source_file)? };
 
         // Replace occurences of old_content with new_content in source_map.
-        let replaced = replace(&self.regex, &source_map, self.new_data);
+        let replaced = replace(&self.regex, &source_map, &self.new_data);
 
         let temp_file = tempfile::NamedTempFile::new_in(
             (self.path)
                 .parent()
-                .ok_or_else(|| Error::InvalidPath((self.path).to_path_buf()))?,
+                .ok_or_else(|| Error::InvalidPath(self.path.clone()))?,
         )?;
         let file = temp_file.as_file();
         file.set_len(replaced.len() as u64)?;
@@ -52,7 +55,7 @@ impl Replacer for SimpleReplacer {
         drop(source_map);
         drop(source_file);
 
-        replacers.push(FileReplacer {
+        replacers.push(file::Replacer {
             path: self.path,
             temp_file,
         });
@@ -64,7 +67,7 @@ impl Replacer for SimpleReplacer {
 fn replace<'a>(
     regex: &regex::bytes::Regex,
     buf: &'a [u8],
-    replace_with: Vec<u8>,
+    replace_with: &[u8],
 ) -> std::borrow::Cow<'a, [u8]> {
-    regex.replacen(buf, 0, &*replace_with)
+    regex.replacen(buf, 0, replace_with)
 }

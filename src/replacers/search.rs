@@ -1,22 +1,26 @@
 use memmap::{Mmap, MmapMut};
 use std::ops::Range;
-use std::{fs, fs::File, io::prelude::*, ops::DerefMut, path::PathBuf};
+use std::{fs, fs::File, io::prelude::*, path::PathBuf};
 
-use super::file::FileReplacer;
+use super::file;
 use crate::error::{Error, Result};
-use crate::replacers::Replacer;
+use crate::replacers::ReplacementBuilder;
 
 /// Replaces all instances of a given value with a new one.
 /// This is a somewhat naive implementation, but it works.
 /// The area surrounding the value will be checked for matches in the supplied regex
-pub struct SearchReplacer {
+pub struct Replacer {
     path: PathBuf,
     new_data: Vec<u8>,
     regex: regex::bytes::Regex,
     verification_regex: regex::bytes::Regex,
 }
 
-impl SearchReplacer {
+impl Replacer {
+    /// # Errors
+    ///
+    /// - `verification_regex` is not a valid regex
+    /// - the regex expression compiled from `verification_regex` is larger than the default size limit of `regex::bytes::RegexBuilder`
     pub fn new(
         path: PathBuf,
         old_content: &str,
@@ -72,13 +76,13 @@ impl SearchReplacer {
     fn get_replacement(
         self,
         source_buf: &Mmap,
-        replacement_locations: Vec<Range<usize>>,
+        replacement_locations: &[Range<usize>],
         file_permissions: std::fs::Permissions,
-    ) -> Result<FileReplacer> {
+    ) -> Result<file::Replacer> {
         let temp_file = tempfile::NamedTempFile::new_in(
             (self.path)
                 .parent()
-                .ok_or_else(|| Error::InvalidPath((self.path).to_path_buf()))?,
+                .ok_or_else(|| Error::InvalidPath(self.path.clone()))?,
         )?;
         let mut file = temp_file.as_file();
 
@@ -99,15 +103,15 @@ impl SearchReplacer {
                 let start = replacement_locations[0].start;
                 let end = replacement_locations[0].end;
 
-                let mut writer = target_map.deref_mut();
+                let mut writer = &mut *target_map;
                 writer.write_all(&source_buf[0..start])?;
                 writer.write_all(&self.new_data)?;
                 writer.write_all(&source_buf[end..])?;
             }
             val if val > 1 => {
-                let mut writer = target_map.deref_mut();
+                let mut writer = &mut *target_map;
                 let mut prev_end = 0;
-                for range in replacement_locations.iter() {
+                for range in replacement_locations {
                     let start = range.start;
                     let end = range.end;
                     writer.write_all(&source_buf[prev_end..start])?;
@@ -124,17 +128,15 @@ impl SearchReplacer {
 
         file.flush()?;
 
-        Ok(FileReplacer {
+        Ok(file::Replacer {
             path: self.path,
             temp_file,
         })
     }
 }
 
-impl Replacer for SearchReplacer {
-    /// Replaces all instances of the old_content with the new_content in the file.
-    /// Returns a FileReplacer object that can be used to replace the file by persisting the changes.
-    fn determine_replacements(self) -> Result<Option<Vec<FileReplacer>>> {
+impl ReplacementBuilder for Replacer {
+    fn determine_replacements(self) -> Result<Option<Vec<file::Replacer>>> {
         let mut replacers = Vec::new();
 
         let source_file = File::open(&self.path)?;
@@ -142,7 +144,7 @@ impl Replacer for SearchReplacer {
         let source_buf = unsafe { Mmap::map(&source_file)? };
 
         let offsets = self.determine_replacement_locations(&source_buf)?;
-        let replacer = self.get_replacement(&source_buf, offsets, source_meta.permissions())?;
+        let replacer = self.get_replacement(&source_buf, &offsets, source_meta.permissions())?;
 
         drop(source_buf);
         drop(source_file);

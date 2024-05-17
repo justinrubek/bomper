@@ -70,6 +70,7 @@ pub fn generate_changelog_entry<'a, I: IntoIterator<Item = &'a Commit>>(
         Some((host, path)) => &format!("[{version}](https://{host}/{path}/releases/tag/{version})"),
         None => version,
     };
+    let version = &format!("{} - {}", version, chrono::Local::now().format("%Y-%m-%d"));
 
     let typed_commits: HashMap<String, Vec<ChangelogCommit>> =
         commits.into_iter().fold(HashMap::new(), |mut acc, commit| {

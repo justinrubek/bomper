@@ -119,11 +119,22 @@ fn gix_repo_url(repo: &gix::Repository) -> Result<Option<(String, String)>> {
             let host = url.host_argument_safe();
             let path = url.path_argument_safe();
             match (host, path) {
-                (Some(host), Some(path)) => Ok(Some((host.to_string(), path.to_string()))),
+                (Some(host), Some(path)) => Ok(Some((
+                    host.to_string(),
+                    remove_suffix(&path.to_string(), ".git").to_string(),
+                ))),
                 _ => Ok(None),
             }
         }
         None => Ok(None),
+    }
+}
+
+fn remove_suffix<'a>(input: &'a str, suffix: &str) -> &'a str {
+    if let Some(stripped) = input.strip_suffix(suffix) {
+        stripped
+    } else {
+        input
     }
 }
 

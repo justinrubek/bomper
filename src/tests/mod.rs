@@ -1,16 +1,16 @@
 mod file;
 use std::{io::Read, path::Path};
 
-use file::FileJail;
+use file::Jail;
 
 use crate::{
     config::{CargoReplaceMode, Config, FileTableData},
-    replacers::{cargo::CargoReplacer, search::SearchReplacer, Replacer, VersionReplacement},
+    replacers::{cargo, search, ReplacementBuilder, VersionReplacement},
 };
 
 #[test]
 fn config_simple() {
-    FileJail::expect_with(|jail| {
+    Jail::expect_with(|jail| {
         jail.create_file(
             "bomp.ron",
             r#"(
@@ -36,7 +36,7 @@ fn config_simple() {
 
 #[test]
 fn config_search() {
-    FileJail::expect_with(|jail| {
+    Jail::expect_with(|jail| {
         jail.create_file(
             "bomp.ron",
             r#"(
@@ -63,7 +63,7 @@ fn config_search() {
 
 #[test]
 fn dual_replace() {
-    FileJail::expect_with(|jail| {
+    Jail::expect_with(|jail| {
         jail.create_file(
             "Cargo.lock",
             r#"
@@ -98,7 +98,7 @@ dependencies = [
 ]"#,
         )?;
 
-        let replacer = SearchReplacer::new(
+        let replacer = search::Replacer::new(
             Path::new("Cargo.lock").to_path_buf(),
             "0.1.0",
             "package1|package2",
@@ -156,7 +156,7 @@ dependencies = [
 /// Replaces a single crate workspace using the cargo replacer with auto-detection
 /// This should update both the Cargo.toml and Cargo.lock files
 fn cargo_individual() {
-    FileJail::expect_with(|jail| {
+    Jail::expect_with(|jail| {
         jail.create_file(
             "Cargo.toml",
             r#"
@@ -238,7 +238,7 @@ version = "0.1.0"
             new_version: "0.2.0".to_string(),
         };
 
-        let replacers = CargoReplacer::new(version_replacement, CargoReplaceMode::Autodetect)?
+        let replacers = cargo::Replacer::new(version_replacement, CargoReplaceMode::Autodetect)
             .determine_replacements()?;
 
         if let Some(replacers) = replacers {
@@ -260,12 +260,12 @@ version = "0.1.0"
     });
 }
 
-/// This test is similar to the cargo_individual test, but it works against a workspace containing
+/// This test is similar to the `cargo_individual` test, but it works against a workspace containing
 /// multiple crates. This case has the added complexity of the workspace crate's possibly inheriting the
 /// version from the workspace using the `crate-name = { workspace = true }` syntax.
 #[test]
 fn cargo_workspace_inherit() {
-    FileJail::expect_with(|jail| {
+    Jail::expect_with(|jail| {
         jail.create_file(
             "Cargo.toml",
             r#"
@@ -363,7 +363,7 @@ version = "0.1.0"
             new_version: "0.2.0".to_string(),
         };
 
-        let replacers = CargoReplacer::new(version_replacement, CargoReplaceMode::Autodetect)?
+        let replacers = cargo::Replacer::new(version_replacement, CargoReplaceMode::Autodetect)
             .determine_replacements()?;
 
         // We need to see changes in `Cargo.lock`, `Cargo.toml` in the workspace root, and
@@ -374,12 +374,12 @@ version = "0.1.0"
             .into_iter()
             .flatten()
             .map(|replacer| {
-                jail.strip_path(replacer.path)
+                jail.strip_path(&replacer.path)
                     .expect("Path should be in the jail")
             })
             .collect();
 
-        expected_paths.sort();
+        expected_paths.sort_unstable();
         replaced_files.sort();
 
         // Check that the expected files were replaced.

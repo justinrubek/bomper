@@ -1,25 +1,25 @@
-use crate::{error::Result, versioning::Commit};
+use crate::{error::Result, versioning};
 use conventional_commit_parser::commit::CommitType;
 use std::collections::HashMap;
 
 const TEMPLATE: &str = include_str!("templates/changelog_entry.md");
 
 #[derive(Debug, serde::Serialize)]
-pub struct ChangelogEntry<'a> {
+pub struct Entry<'a> {
     pub version: &'a str,
-    pub commits: HashMap<String, Vec<ChangelogCommit>>,
+    pub commits: HashMap<String, Vec<Commit>>,
     pub description: Option<String>,
 }
 
 #[derive(Clone, Debug)]
-pub struct ChangelogCommit {
+pub struct Commit {
     pub scope: Option<String>,
     pub summary: String,
     pub hash: String,
     pub author: String,
 }
 
-impl std::fmt::Display for ChangelogCommit {
+impl std::fmt::Display for Commit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.scope {
             Some(ref scope) => write!(
@@ -32,12 +32,13 @@ impl std::fmt::Display for ChangelogCommit {
     }
 }
 
-impl serde::Serialize for ChangelogCommit {
+impl serde::Serialize for Commit {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.collect_str(self)
     }
 }
 
+#[must_use]
 pub fn display_commit_type(commit_type: &CommitType) -> String {
     match commit_type {
         CommitType::Feature => "features".to_string(),
@@ -55,15 +56,22 @@ pub fn display_commit_type(commit_type: &CommitType) -> String {
     }
 }
 
-pub fn generate_changelog_entry<'a, I: IntoIterator<Item = &'a Commit>>(
+/// # Errors
+///
+/// - if the template is invalid, however this is unlikely to happen since the template is hardcoded
+pub fn generate_changelog_entry<
+    'a,
+    I: IntoIterator<Item = &'a versioning::Commit>,
+    S: ::std::hash::BuildHasher,
+>(
     repo: &gix::Repository,
     commits: I,
     version: &str,
     description: Option<String>,
-    authors: &Option<HashMap<String, String>>,
+    authors: &Option<HashMap<String, String, S>>,
 ) -> Result<String> {
     let mut env = minijinja::Environment::new();
-    env.add_template("changelog_entry", TEMPLATE).unwrap();
+    env.add_template("changelog_entry", TEMPLATE)?;
 
     let url = gix_repo_url(repo)?;
     let version = match &url {
@@ -72,7 +80,7 @@ pub fn generate_changelog_entry<'a, I: IntoIterator<Item = &'a Commit>>(
     };
     let version = &format!("{} - {}", version, chrono::Local::now().format("%Y-%m-%d"));
 
-    let typed_commits: HashMap<String, Vec<ChangelogCommit>> =
+    let typed_commits: HashMap<String, Vec<Commit>> =
         commits.into_iter().fold(HashMap::new(), |mut acc, commit| {
             let key = display_commit_type(&commit.conventional_commit.commit_type);
             let entry = acc.entry(key).or_default();
@@ -86,7 +94,7 @@ pub fn generate_changelog_entry<'a, I: IntoIterator<Item = &'a Commit>>(
                 None => commit_id,
             };
 
-            let commit = ChangelogCommit {
+            let commit = Commit {
                 scope: commit.conventional_commit.scope.clone(),
                 summary: commit.conventional_commit.summary.clone(),
                 hash,
@@ -95,13 +103,13 @@ pub fn generate_changelog_entry<'a, I: IntoIterator<Item = &'a Commit>>(
             entry.push(commit);
             acc
         });
-    let entry = ChangelogEntry {
+    let entry = Entry {
         version,
         commits: typed_commits,
         description,
     };
 
-    let template = env.get_template("changelog_entry").unwrap();
+    let template = env.get_template("changelog_entry")?;
     template
         .render(minijinja::context!(
             entry => entry,
@@ -139,9 +147,9 @@ fn remove_suffix<'a>(input: &'a str, suffix: &str) -> &'a str {
     }
 }
 
-fn author_name(
+fn author_name<S: ::std::hash::BuildHasher>(
     commit_author: String,
-    authors: &Option<HashMap<String, String>>,
+    authors: &Option<HashMap<String, String, S>>,
     url: &Option<(String, String)>,
 ) -> String {
     match url {

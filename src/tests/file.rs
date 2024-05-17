@@ -11,7 +11,7 @@ use tempfile::TempDir;
 
 use crate::error::{Error, Result};
 
-pub struct FileJail {
+pub struct Jail {
     _directory: TempDir,
     canonical_path: PathBuf,
     original_cwd: PathBuf,
@@ -19,19 +19,19 @@ pub struct FileJail {
 
 static LOCK: Mutex<()> = parking_lot::const_mutex(());
 
-impl FileJail {
+impl Jail {
     #[track_caller]
-    pub fn expect_with<F: FnOnce(&mut FileJail) -> Result<()>>(f: F) {
-        if let Err(e) = FileJail::try_with(f) {
-            panic!("failed to create jail: {}", e)
+    pub fn expect_with<F: FnOnce(&mut Jail) -> Result<()>>(f: F) {
+        if let Err(e) = Jail::try_with(f) {
+            panic!("failed to create jail: {e}")
         }
     }
 
     #[track_caller]
-    pub fn try_with<F: FnOnce(&mut FileJail) -> Result<()>>(f: F) -> Result<()> {
+    pub fn try_with<F: FnOnce(&mut Jail) -> Result<()>>(f: F) -> Result<()> {
         let _lock = LOCK.lock();
         let directory = TempDir::new()?;
-        let mut jail = FileJail {
+        let mut jail = Jail {
             canonical_path: directory.path().canonicalize()?,
             _directory: directory,
             original_cwd: std::env::current_dir()?,
@@ -66,7 +66,7 @@ impl FileJail {
     }
 
     /// Returns the path to the file in the jail
-    pub fn strip_path(&self, path: PathBuf) -> Result<String> {
+    pub fn strip_path(&self, path: &Path) -> Result<String> {
         let path = path.canonicalize()?;
         if !path.starts_with(&self.canonical_path) {
             return Err(Error::Other(anyhow!(
@@ -85,7 +85,7 @@ fn as_string_error<S: Display>(s: S) -> Error {
     Error::Other(anyhow!("{}", s.to_string()))
 }
 
-impl Drop for FileJail {
+impl Drop for Jail {
     fn drop(&mut self) {
         let _ = std::env::set_current_dir(&self.original_cwd);
     }

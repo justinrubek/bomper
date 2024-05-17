@@ -48,7 +48,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if !config_path.exists() {
                 return Err("No configuration file found".into());
             }
-            config_path.to_owned()
+            config_path.clone()
         }
     };
     let config_path = config_path.canonicalize()?;

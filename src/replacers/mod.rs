@@ -5,10 +5,13 @@ pub mod file;
 pub mod search;
 pub mod simple;
 
-use file::FileReplacer;
+use file::Replacer;
 
-pub trait Replacer {
-    fn determine_replacements(self) -> Result<Option<Vec<FileReplacer>>>;
+pub trait ReplacementBuilder {
+    /// # Errors
+    ///
+    /// - determined by the implementation
+    fn determine_replacements(self) -> Result<Option<Vec<Replacer>>>;
 }
 
 #[derive(Clone, Debug)]

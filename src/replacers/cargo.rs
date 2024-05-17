@@ -3,36 +3,35 @@ use cargo_metadata::camino::Utf8Path;
 use std::path::Path;
 use std::{io::prelude::*, path::PathBuf, str::FromStr};
 
-use super::file::FileReplacer;
+use super::file;
 use super::VersionReplacement;
 use crate::config::CargoReplaceMode;
 use crate::error::{Error, Result};
-use crate::replacers::Replacer;
+use crate::replacers::ReplacementBuilder;
 
 /// Replaces all instances of a given value with a new one.
 /// This is a somewhat naive implementation, but it works.
 /// The area surrounding the value will be checked for matches in the supplied regex
-pub struct CargoReplacer {
+pub struct Replacer {
     lock_path: PathBuf,
     versions: VersionReplacement,
     replace_mode: CargoReplaceMode,
 }
 
-impl CargoReplacer {
-    pub fn new(versions: VersionReplacement, replace_mode: CargoReplaceMode) -> Result<Self> {
-        Ok(Self {
+impl Replacer {
+    #[must_use]
+    pub fn new(versions: VersionReplacement, replace_mode: CargoReplaceMode) -> Self {
+        Self {
             // TODO: This may need to be specified, or detected
             lock_path: PathBuf::from("Cargo.lock"),
             versions,
             replace_mode,
-        })
+        }
     }
 }
 
-impl Replacer for CargoReplacer {
-    /// Replaces all instances of the old_content with the new_content in the file.
-    /// Returns a FileReplacer object that can be used to replace the file by persisting the changes.
-    fn determine_replacements(self) -> Result<Option<Vec<FileReplacer>>> {
+impl ReplacementBuilder for Replacer {
+    fn determine_replacements(self) -> Result<Option<Vec<file::Replacer>>> {
         let mut replacers = Vec::new();
 
         let metadata = get_workspace_metadata()?;
@@ -42,8 +41,8 @@ impl Replacer for CargoReplacer {
         let mut lockfile = cargo_lock::Lockfile::load(&self.lock_path)?;
 
         let packages = match &self.replace_mode {
-            CargoReplaceMode::Autodetect => list_cargo_workspace(&metadata)?,
-            CargoReplaceMode::Packages(packages) => list_packages(&metadata, packages.clone())?,
+            CargoReplaceMode::Autodetect => metadata.packages,
+            CargoReplaceMode::Packages(packages) => list_packages(&metadata, packages),
         };
 
         let new_version = cargo_lock::Version::from_str(&self.versions.new_version)?;
@@ -68,12 +67,12 @@ impl Replacer for CargoReplacer {
         let temp_file = tempfile::NamedTempFile::new_in(
             (self.lock_path)
                 .parent()
-                .ok_or_else(|| Error::InvalidPath((self.lock_path).to_path_buf()))?,
+                .ok_or_else(|| Error::InvalidPath(self.lock_path.clone()))?,
         )?;
         let mut file = temp_file.as_file();
         file.write_all(&new_data)?;
 
-        replacers.push(FileReplacer {
+        replacers.push(file::Replacer {
             path: self.lock_path.clone(),
             temp_file,
         });
@@ -98,44 +97,30 @@ impl Replacer for CargoReplacer {
         let found_workspace_root = replacers
             .iter()
             .find(|replacer| replacer.path == root_toml_path);
-        match found_workspace_root {
-            Some(_) => {
-                // We've already updated the workspace root, so we don't need to do anything
-            }
-            None => {
-                // We haven't updated the workspace root, so we need to do that now
-                let replacer = update_workspace_root(workspace_root, &self.versions)?;
-                if let Some(replacer) = replacer {
-                    replacers.push(replacer);
-                };
-            }
+
+        if found_workspace_root.is_none() {
+            // We haven't updated the workspace root, so we need to do that now
+            let replacer = update_workspace_root(workspace_root, &self.versions)?;
+            if let Some(replacer) = replacer {
+                replacers.push(replacer);
+            };
         }
 
         Ok(Some(replacers))
     }
 }
 
-/// Returns all packages in the cargo workspace
-/// This is only the packages that are defined in the local workspace, and not the dependencies
-fn list_cargo_workspace(
-    metadata: &cargo_metadata::Metadata,
-) -> Result<Vec<cargo_metadata::Package>> {
-    Ok(metadata.packages.clone())
-}
-
 /// Returns all packages in the cargo workspace that match the given name
 fn list_packages(
     metadata: &cargo_metadata::Metadata,
-    names: Vec<String>,
-) -> Result<Vec<cargo_metadata::Package>> {
-    let packages = metadata
+    names: &[String],
+) -> Vec<cargo_metadata::Package> {
+    metadata
         .clone()
         .packages
         .into_iter()
         .filter(|package| names.contains(&package.name))
-        .collect();
-
-    Ok(packages)
+        .collect()
 }
 
 /// Retrieves the metadata for the current workspace.
@@ -153,28 +138,24 @@ fn get_workspace_metadata() -> Result<cargo_metadata::Metadata> {
 fn update_workspace_root(
     workspace_root: &Utf8Path,
     versions: &VersionReplacement,
-) -> Result<Option<FileReplacer>> {
+) -> Result<Option<file::Replacer>> {
     let cargo_toml_path = workspace_root.join("Cargo.toml");
     let cargo_toml_path = cargo_toml_path.strip_prefix(workspace_root)?;
     let cargo_toml_content = std::fs::read(cargo_toml_path)?;
 
     let mut cargo_toml = cargo_toml::Manifest::from_slice(&cargo_toml_content)?;
 
-    let workspace = match cargo_toml.workspace {
-        Some(ref mut workspace) => workspace,
-        None => return Ok(None),
+    let Some(ref mut workspace) = cargo_toml.workspace else {
+        return Ok(None);
     };
-
-    let workspace_package = match workspace.package {
-        Some(ref mut package) => package,
-        None => return Ok(None),
+    let Some(ref mut workspace_package) = workspace.package else {
+        return Ok(None);
     };
 
     if workspace_package.version != Some(versions.old_version.clone()) {
         return Ok(None);
-    } else {
-        workspace_package.version = Some(versions.new_version.clone());
     }
+    workspace_package.version = Some(versions.new_version.clone());
 
     let temp_file = tempfile::NamedTempFile::new_in(
         (workspace_root)
@@ -186,7 +167,7 @@ fn update_workspace_root(
     let data = toml::to_string(&cargo_toml)?;
     file.write_all(data.as_bytes())?;
 
-    Ok(Some(FileReplacer {
+    Ok(Some(file::Replacer {
         path: cargo_toml_path.into(),
         temp_file,
     }))
@@ -198,7 +179,7 @@ fn update_package(
     workspace_root: &Utf8Path,
     lock_path: &Path,
     versions: &VersionReplacement,
-) -> Result<Option<FileReplacer>> {
+) -> Result<Option<file::Replacer>> {
     let cargo_toml_path = package.manifest_path.clone();
     let cargo_toml_path = cargo_toml_path.strip_prefix(workspace_root)?;
     let cargo_toml_content = std::fs::read(cargo_toml_path)?;
@@ -207,9 +188,8 @@ fn update_package(
     // let mut cargo_toml = cargo_toml::Manifest::from_path(&cargo_toml_path)?;
 
     {
-        let toml_package = match cargo_toml.package {
-            Some(ref mut package) => package,
-            None => return Err(Error::InvalidCargoToml(cargo_toml_path.into())),
+        let Some(ref mut toml_package) = cargo_toml.package else {
+            return Err(Error::InvalidCargoToml(cargo_toml_path.into()));
         };
 
         let file_version = match &mut toml_package.version {
@@ -229,7 +209,7 @@ fn update_package(
     // if it is, we need to update the workspace root's Cargo.toml
     let workspace_root_toml_path = workspace_root.join("Cargo.toml");
     if cargo_toml_path == workspace_root_toml_path {
-        modify_workspace_root(&mut cargo_toml, versions)?;
+        modify_workspace_root(&mut cargo_toml, versions);
     }
 
     let temp_file = tempfile::NamedTempFile::new_in(
@@ -242,31 +222,22 @@ fn update_package(
     let data = toml::to_string(&cargo_toml)?;
     file.write_all(data.as_bytes())?;
 
-    Ok(Some(FileReplacer {
+    Ok(Some(file::Replacer {
         path: cargo_toml_path.into(),
         temp_file,
     }))
 }
 
-fn modify_workspace_root(
-    cargo_toml: &mut cargo_toml::Manifest,
-    versions: &VersionReplacement,
-) -> Result<()> {
-    let workspace = match cargo_toml.workspace {
-        Some(ref mut workspace) => workspace,
-        None => return Ok(()),
+fn modify_workspace_root(cargo_toml: &mut cargo_toml::Manifest, versions: &VersionReplacement) {
+    let Some(ref mut workspace) = cargo_toml.workspace else {
+        return;
     };
-
-    let workspace_package = match workspace.package {
-        Some(ref mut package) => package,
-        None => return Ok(()),
+    let Some(ref mut workspace_package) = workspace.package else {
+        return;
     };
 
     if workspace_package.version != Some(versions.old_version.clone()) {
-        return Ok(());
-    } else {
-        workspace_package.version = Some(versions.new_version.clone());
+        return;
     }
-
-    Ok(())
+    workspace_package.version = Some(versions.new_version.clone());
 }

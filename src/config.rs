@@ -21,6 +21,9 @@ pub struct Config {
 }
 
 impl Config {
+    /// # Errors
+    /// - If the file cannot be read
+    /// - If the file is not valid RON
     pub fn from_ron(path: &impl AsRef<Path>) -> Result<Config> {
         let file = std::fs::read_to_string(path)?;
         let value: Config = ron::from_str(&file)?;

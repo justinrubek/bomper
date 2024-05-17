@@ -61,3 +61,7 @@ required-features = []
 path = "src/main.rs"
 name = "bomper"
 required-features = []
+
+[lints.clippy.pedantic]
+level = "warn"
+priority = -1

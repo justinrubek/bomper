@@ -3,10 +3,7 @@ use bomper::{
     changelog::generate_changelog_entry,
     config::Config,
     error::{Error, Result},
-    replacers::{
-        cargo::CargoReplacer, file::FileReplacer, search::SearchReplacer, simple::SimpleReplacer,
-        Replacer, VersionReplacement,
-    },
+    replacers::{cargo, file, search, simple, ReplacementBuilder, VersionReplacement},
     versioning::{get_commits_between_tags, get_commits_since_tag, get_latest_tag, Commit, Tag},
 };
 use console::{style, Style};
@@ -34,12 +31,11 @@ impl App {
         let increment = opts.options.determine_increment(&commits, &tag.version)?;
         let new_tag = tag.increment_version(increment);
         let version_description = if opts.description {
-            match prompt_for_description()? {
-                Some(description) => Some(description),
-                None => {
-                    println!("Aborting bump due to empty description");
-                    return Ok(());
-                }
+            if let Some(description) = prompt_for_description()? {
+                Some(description)
+            } else {
+                println!("Aborting bump due to empty description");
+                return Ok(());
             }
         } else {
             None
@@ -58,9 +54,9 @@ impl App {
             new_version: new_tag.version.to_string(),
         };
         let mut file_changes = determine_changes(&self.config, &replacement)?;
-        file_changes.push(apply_changelog(changelog_entry)?);
+        file_changes.push(apply_changelog(&changelog_entry)?);
         if let Some(changes) = apply_changes(file_changes, &self.args)? {
-            let new_tree = prepare_commit(&repo, changes)?;
+            let new_tree = prepare_commit(&repo, &changes)?;
             let object_id = repo.write_object(&new_tree)?;
             let commit = repo.commit(
                 "HEAD",
@@ -97,7 +93,7 @@ impl App {
                     None,
                     &self.config.authors,
                 )?;
-                println!("{}", changelog_entry);
+                println!("{changelog_entry}");
             }
             None => {
                 let (_, commits) = changelog_commits(&repo)?;
@@ -110,17 +106,16 @@ impl App {
                 )?;
                 let path = std::path::PathBuf::from("CHANGELOG.md");
                 if opts.no_decorations {
-                    match opts.only_current_version {
-                        true => println!("{}", changelog_entry),
-                        false => {
-                            let new_changelog = create_changelog(&path, &changelog_entry)?;
-                            println!("{}", new_changelog);
-                        }
+                    if opts.only_current_version {
+                        println!("{changelog_entry}");
+                    } else {
+                        let new_changelog = create_changelog(&path, &changelog_entry)?;
+                        println!("{new_changelog}");
                     }
                 } else {
                     let old_changelog = std::fs::read_to_string(&path).unwrap_or_default();
                     let new_changelog = create_changelog(&path, &changelog_entry)?;
-                    print_diff(old_changelog, new_changelog, path.display().to_string());
+                    print_diff(&old_changelog, &new_changelog, path.display().to_string());
                 }
             }
         }
@@ -143,14 +138,14 @@ impl App {
 /// Persist file changes to the filesystem.
 /// This function is responsible for respecting the `dry_run` flag, so it will only persist changes
 /// if the flag is not set.
-fn apply_changes(changes: Vec<FileReplacer>, args: &BaseArgs) -> Result<Option<Vec<PathBuf>>> {
+fn apply_changes(changes: Vec<file::Replacer>, args: &BaseArgs) -> Result<Option<Vec<PathBuf>>> {
     if args.dry_run {
         println!("Dry run, not persisting changes");
         for replacer in changes {
             let original = std::fs::read_to_string(&replacer.path).unwrap_or_default();
             let new = std::fs::read_to_string(&replacer.temp_file)?;
 
-            print_diff(original, new, replacer.path.display().to_string())
+            print_diff(&original, &new, replacer.path.display().to_string());
         }
 
         Ok(None)
@@ -168,21 +163,21 @@ fn apply_changes(changes: Vec<FileReplacer>, args: &BaseArgs) -> Result<Option<V
 fn determine_changes(
     config: &Config,
     replacement: &VersionReplacement,
-) -> Result<Vec<FileReplacer>> {
+) -> Result<Vec<file::Replacer>> {
     let mut files_to_replace = Vec::new();
 
     let by_file = &config.by_file;
     if let Some(by_file) = by_file {
         for (path, config) in by_file {
             let mut replacers = match &config.search_value {
-                Some(value) => SearchReplacer::new(
+                Some(value) => search::Replacer::new(
                     path.clone(),
                     &replacement.old_version,
                     value,
                     &replacement.new_version,
                 )?
                 .determine_replacements()?,
-                None => SimpleReplacer::new(
+                None => simple::Replacer::new(
                     path.clone(),
                     &replacement.old_version,
                     &replacement.new_version,
@@ -199,7 +194,7 @@ fn determine_changes(
 
     let cargo_lock = &config.cargo;
     if let Some(cargo_lock) = cargo_lock {
-        let replacer = CargoReplacer::new(replacement.clone(), cargo_lock.clone())?;
+        let replacer = cargo::Replacer::new(replacement.clone(), cargo_lock.clone());
         let mut files = replacer.determine_replacements()?;
         if let Some(files) = &mut files {
             files_to_replace.append(files);
@@ -212,7 +207,7 @@ fn determine_changes(
 /// Stitch together the existing changelog with the new one.
 /// This is done using `- - -` as a marker character.
 /// The new changelog is composed of the changelog header (everything from the start to the first
-/// marker`, the new entry (with a marker on top), and the remaining part of the previous changelog
+/// marker, the new entry (with a marker on top), and the remaining part of the previous changelog
 fn create_changelog(path: &std::path::Path, contents: &str) -> Result<String> {
     const MARKER: &str = "- - -";
 
@@ -232,24 +227,24 @@ fn create_changelog(path: &std::path::Path, contents: &str) -> Result<String> {
     }
 }
 
-fn apply_changelog(entry: String) -> Result<FileReplacer> {
+fn apply_changelog(entry: &str) -> Result<file::Replacer> {
     let path = std::path::PathBuf::from("CHANGELOG.md");
-    let new_changelog = create_changelog(&path, &entry)?;
+    let new_changelog = create_changelog(&path, entry)?;
 
     let temp_file = tempfile::NamedTempFile::new_in(".")?;
     let mut file = temp_file.as_file();
     file.write_all(new_changelog.as_bytes())?;
 
-    Ok(FileReplacer { path, temp_file })
+    Ok(file::Replacer { path, temp_file })
 }
 
 fn prepare_commit(
     repo: &gix::Repository,
-    changes: Vec<PathBuf>,
+    changes: &[PathBuf],
 ) -> Result<gix::worktree::object::Tree> {
     let head = repo.head_commit()?;
     let tree: gix::worktree::object::Tree = head.tree()?.decode()?.into();
-    let new_tree = rewrite_tree(repo, &tree.clone(), &changes, &mut PathBuf::new())?;
+    let new_tree = rewrite_tree(repo, &tree.clone(), &changes.to_vec(), &mut PathBuf::new())?;
     Ok(new_tree)
 }
 
@@ -285,7 +280,7 @@ fn rewrite_tree(
                 let file_name = entry.filename.clone().to_string();
                 let file_path = tree_path.join(file_name);
                 if let Some(new_path) = changes.iter().find(|p| **p == file_path) {
-                    println!("replacing {:?}", new_path);
+                    println!("replacing {new_path:?}");
                     let new_id = repo.write_blob_stream(std::fs::File::open(new_path)?)?;
 
                     new_entries.push(gix::worktree::object::tree::Entry {
@@ -306,7 +301,7 @@ fn rewrite_tree(
     })
 }
 
-fn print_diff(original: String, new: String, context: String) {
+fn print_diff(original: &str, new: &str, context: String) {
     struct Line(Option<usize>);
 
     impl fmt::Display for Line {
@@ -323,7 +318,7 @@ fn print_diff(original: String, new: String, context: String) {
     // write `─` for the width of the terminal
     println!("{:─^1$}", style("─").cyan(), w as usize);
 
-    let diff = TextDiff::from_lines(&original, &new);
+    let diff = TextDiff::from_lines(original, new);
     for (idx, group) in diff.grouped_ops(3).iter().enumerate() {
         if idx > 0 {
             println!("{:-^1$}", "-", 80);
@@ -396,17 +391,16 @@ fn prompt_for_description() -> Result<Option<String>> {
 /// The latest tag is determined by the highest semver tag in the repository.
 /// If no tags are found, the root commit will be used as the starting point and a version of `0.0.0` will be used.
 fn changelog_commits(repo: &gix::Repository) -> Result<(Tag, Vec<Commit>)> {
-    let tag = match get_latest_tag(repo)? {
-        Some(tag) => tag,
-        None => {
-            let head = repo.head_commit()?;
-            let ancestors = head.ancestors();
-            let root_commit = ancestors.all()?.last();
-            Tag {
-                version: semver::Version::new(0, 0, 0),
-                commit_id: root_commit.unwrap().unwrap().id().into(),
-                prefix_v: false,
-            }
+    let tag = if let Some(tag) = get_latest_tag(repo)? {
+        tag
+    } else {
+        let head = repo.head_commit()?;
+        let ancestors = head.ancestors();
+        let root_commit = ancestors.all()?.last();
+        Tag {
+            version: semver::Version::new(0, 0, 0),
+            commit_id: root_commit.unwrap().unwrap().id().into(),
+            prefix_v: false,
         }
     };
     let commits = get_commits_since_tag(repo, &tag)?;

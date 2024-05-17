@@ -67,6 +67,7 @@ pub(crate) struct Changelog {
 
 #[derive(clap::Args, Debug)]
 #[command(group = clap::ArgGroup::new("bump-type").required(true))]
+#[allow(clippy::struct_excessive_bools)]
 pub(crate) struct BumpOptions {
     #[arg(short, long, group = "bump-type")]
     pub version: Option<String>,
@@ -89,7 +90,7 @@ impl BumpOptions {
         match &self.version {
             Some(version) => Ok(VersionIncrement::Manual(semver::Version::parse(version)?)),
             None if self.automatic => {
-                let conventional_commits = commits.into_iter().map(|c| c.as_ref());
+                let conventional_commits = commits.into_iter().map(std::convert::AsRef::as_ref);
                 Ok(determine_increment(conventional_commits, current_version))
             }
             None if self.major => Ok(VersionIncrement::Major),

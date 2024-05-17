@@ -249,7 +249,7 @@ fn prepare_commit(
 ) -> Result<gix::worktree::object::Tree> {
     let head = repo.head_commit()?;
     let tree: gix::worktree::object::Tree = head.tree()?.decode()?.into();
-    let new_tree = rewrite_tree(repo, &tree.clone(), &changes)?;
+    let new_tree = rewrite_tree(repo, &tree.clone(), &changes, &mut PathBuf::new())?;
     Ok(new_tree)
 }
 
@@ -261,6 +261,7 @@ fn rewrite_tree(
     repo: &gix::Repository,
     tree: &gix::worktree::object::Tree,
     changes: &Vec<PathBuf>,
+    tree_path: &mut PathBuf,
 ) -> Result<gix::worktree::object::Tree> {
     let mut new_entries = vec![];
 
@@ -269,7 +270,9 @@ fn rewrite_tree(
         match &object.kind {
             gix::object::Kind::Tree => {
                 let old_tree = object.clone().into_tree().decode()?.into();
-                let new_tree = rewrite_tree(repo, &old_tree, changes)?;
+                tree_path.push(entry.filename.to_string());
+                let new_tree = rewrite_tree(repo, &old_tree, changes, tree_path)?;
+                tree_path.pop();
                 let new_id = repo.write_object(&new_tree)?;
 
                 new_entries.push(gix::worktree::object::tree::Entry {
@@ -279,7 +282,8 @@ fn rewrite_tree(
                 });
             }
             gix::object::Kind::Blob => {
-                let file_path: PathBuf = entry.filename.clone().to_string().into();
+                let file_name = entry.filename.clone().to_string();
+                let file_path = tree_path.join(file_name);
                 if let Some(new_path) = changes.iter().find(|p| **p == file_path) {
                     println!("replacing {:?}", new_path);
                     let new_id = repo.write_blob_stream(std::fs::File::open(new_path)?)?;

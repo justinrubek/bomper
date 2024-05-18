@@ -30,7 +30,7 @@ jobs:
         env:
           VERSION: ${{ steps.get-version.outputs.version }}
         run: |
-          nix run .#bomp -- changelog --at $VERSION > GITHUB_CHANGELOG.md
+          nix run .#bomper -- changelog --at $VERSION > GITHUB_CHANGELOG.md
       - name: generate release
         uses: softprops/action-gh-release@v1
         with:

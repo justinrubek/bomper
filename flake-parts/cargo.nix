@@ -55,8 +55,8 @@
     deps-only = craneLib.buildDepsOnly ({} // common-build-args);
 
     packages = {
-      default = packages.cli;
-      cli = craneLib.buildPackage ({
+      default = packages.bomp;
+      bomp = craneLib.buildPackage ({
           pname = "bomp";
           cargoArtifacts = deps-only;
           meta.mainProgram = "bomp";
@@ -100,11 +100,11 @@
     };
 
     apps = {
-      cli = {
+      bomp = {
         type = "app";
-        program = pkgs.lib.getBin self'.packages.cli;
+        program = pkgs.lib.getBin self'.packages.bomp;
       };
-      default = apps.cli;
+      default = apps.bomp;
     };
   };
 }

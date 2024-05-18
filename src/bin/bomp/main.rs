@@ -56,7 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = Config::from_ron(&config_path)?;
     tracing::debug!(?config);
 
-    let app = App::new(args.base_args, config);
+    let app = App::new(config);
     match args.command {
         Commands::Changelog(changelog) => {
             app.changelog(&changelog)?;

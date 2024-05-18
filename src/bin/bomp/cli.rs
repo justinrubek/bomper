@@ -17,8 +17,6 @@ pub struct Args {
 pub(crate) struct BaseArgs {
     #[arg(short, long)]
     pub config_file: Option<PathBuf>,
-    #[arg(short, long)]
-    pub dry_run: bool,
     /// the directory of the repository to run on.
     #[arg(short, long)]
     pub repository: Option<PathBuf>,
@@ -38,6 +36,9 @@ pub(crate) enum Commands {
 pub(crate) struct RawBump {
     pub old_version: String,
     pub new_version: String,
+
+    #[arg(short, long)]
+    pub dry_run: bool,
 }
 
 #[derive(clap::Args, Debug)]
@@ -47,7 +48,10 @@ pub(crate) struct Bump {
 
     /// Whether to prompt for a hand-written summary message
     #[arg(short, long)]
-    pub description: bool,
+    pub comment: bool,
+
+    #[arg(short, long)]
+    pub dry_run: bool,
 }
 
 #[derive(clap::Args, Debug)]

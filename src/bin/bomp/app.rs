@@ -1,4 +1,4 @@
-use crate::cli::{BaseArgs, Bump, Changelog, RawBump};
+use crate::cli::{Bump, Changelog, RawBump};
 use bomper::{
     changelog::generate_changelog_entry,
     config::Config,
@@ -12,13 +12,12 @@ use similar::{ChangeTag, TextDiff};
 use std::{fmt, io::Write, path::PathBuf, process::Command};
 
 pub struct App {
-    pub args: BaseArgs,
     pub config: Config,
 }
 
 impl App {
-    pub fn new(args: BaseArgs, config: Config) -> App {
-        App { args, config }
+    pub fn new(config: Config) -> App {
+        App { config }
     }
 }
 
@@ -30,7 +29,7 @@ impl App {
 
         let increment = opts.options.determine_increment(&commits, &tag.version)?;
         let new_tag = tag.increment_version(increment);
-        let version_description = if opts.description {
+        let version_description = if opts.comment {
             if let Some(description) = prompt_for_description()? {
                 Some(description)
             } else {
@@ -55,7 +54,7 @@ impl App {
         };
         let mut file_changes = determine_changes(&self.config, &replacement)?;
         file_changes.push(apply_changelog(&changelog_entry)?);
-        if let Some(changes) = apply_changes(file_changes, &self.args)? {
+        if let Some(changes) = apply_changes(file_changes, opts.dry_run)? {
             let new_tree = prepare_commit(&repo, &changes)?;
             let object_id = repo.write_object(&new_tree)?;
             let commit = repo.commit(
@@ -129,7 +128,7 @@ impl App {
             new_version: opts.new_version.clone(),
         };
         let file_changes = determine_changes(&self.config, &replacement)?;
-        apply_changes(file_changes, &self.args)?;
+        apply_changes(file_changes, opts.dry_run)?;
 
         Ok(())
     }
@@ -138,8 +137,8 @@ impl App {
 /// Persist file changes to the filesystem.
 /// This function is responsible for respecting the `dry_run` flag, so it will only persist changes
 /// if the flag is not set.
-fn apply_changes(changes: Vec<file::Replacer>, args: &BaseArgs) -> Result<Option<Vec<PathBuf>>> {
-    if args.dry_run {
+fn apply_changes(changes: Vec<file::Replacer>, dry_run: bool) -> Result<Option<Vec<PathBuf>>> {
+    if dry_run {
         println!("Dry run, not persisting changes");
         for replacer in changes {
             let original = std::fs::read_to_string(&replacer.path).unwrap_or_default();

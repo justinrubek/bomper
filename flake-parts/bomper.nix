@@ -1,5 +1,5 @@
 _: {
-  perSystem = {...}: {
+  perSystem = _: {
     bomper = {
       enable = true;
       configuration = ''

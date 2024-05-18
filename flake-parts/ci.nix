@@ -8,14 +8,14 @@ _: {
     devShells = {
       ci = pkgs.mkShell rec {
         packages = [
-          self'.packages.bomp
+          self'.packages.bomper
         ];
 
         LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath packages;
       };
     };
     packages = {
-      bomp = config.bomper.wrappedBomper;
+      bomper = config.bomper.wrappedBomper;
     };
   };
 }

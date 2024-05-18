@@ -31,11 +31,12 @@
         inputs.pre-commit-hooks.flakeModule
         flakeModules.bomper
 
-        ./flake-parts/cargo.nix
-        ./flake-parts/rust-toolchain.nix
-        ./flake-parts/pre-commit.nix
-        ./flake-parts/formatting.nix
         ./flake-parts/bomper.nix
+        ./flake-parts/cargo.nix
+        ./flake-parts/ci.nix
+        ./flake-parts/formatting.nix
+        ./flake-parts/pre-commit.nix
+        ./flake-parts/rust-toolchain.nix
       ];
 
       flake = {

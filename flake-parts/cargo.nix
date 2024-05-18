@@ -57,9 +57,9 @@
     packages = {
       default = packages.cli;
       cli = craneLib.buildPackage ({
-          pname = "bomper";
+          pname = "bomp";
           cargoArtifacts = deps-only;
-          meta.mainProgram = "bomper";
+          meta.mainProgram = "bomp";
         }
         // common-build-args);
       cargo-doc = craneLib.cargoDoc ({

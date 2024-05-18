@@ -45,9 +45,9 @@ localFlake: {
       in
         lib.mkIf cfg.enable {
           bomper.wrappedBomper = localFlake.withSystem system ({config, ...}: (pkgs.writeShellApplication {
-            name = "bomper";
+            name = "bomp";
             runtimeInputs = [config.packages.cli];
-            text = ''exec bomper --config-file ${configFile} "$@"'';
+            text = ''exec bomp --config-file ${configFile} "$@"'';
           }));
         };
     });

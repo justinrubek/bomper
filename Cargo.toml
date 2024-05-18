@@ -52,11 +52,6 @@ edition = "2021"
 crate-type = ["rlib"]
 required-features = []
 
-[[bin]]
-path = "src/main.rs"
-name = "bomper"
-required-features = []
-
 [lints.clippy.pedantic]
 level = "warn"
 priority = -1

@@ -22,7 +22,7 @@ bomper aims to be a simpler, more focused, and opinionated tool that can be cust
 
 ## usage
 
-Run the command with `--help` to view the instructions.
+Run `bomp --help` to view the instructions.
 
 In order for bomper to work, it must be told where to find the files that need to be updated.
 The configuration supports either arbitrary files or a number of supported project types (currently only `cargo`, but this can be added to).

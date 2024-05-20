@@ -1,0 +1,26 @@
+name: update-flake-lock
+on:
+  schedule:
+    - cron: '13 7 * * 5'
+  workflow_dispatch:
+
+jobs:
+  scheduled-flake-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install nix
+        uses: cachix/install-nix-action@v27
+        with:
+          extra_nix_config: |
+            access-tokens = github=${{ secrets.GITHUB_TOKEN }}
+            extra-substituters = https://cache.garnix.io
+            extra-trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g=
+
+      - name: update flake
+        uses: DeterminateSystems/update-flake-lock@v21
+        with:
+          commit-msg: "build(nix): nix flake update (auto)"
+          pr-title: "nix flake update (auto)"
+          pr-body: "scheduled updates"
+          pr-reviewers: "justinrubek"

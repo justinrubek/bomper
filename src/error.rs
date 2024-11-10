@@ -43,7 +43,15 @@ pub enum Error {
     #[error(transparent)]
     GixRemoteFindExisting(#[from] gix::remote::find::existing::Error),
     #[error(transparent)]
+    GixRepositoryEditTree(#[from] gix::repository::edit_tree::Error),
+    #[error(transparent)]
+    GixRevWalkIter(#[from] gix::revision::walk::iter::Error),
+    #[error(transparent)]
     GixTraverseCommitSimple(#[from] gix::traverse::commit::simple::Error),
+    #[error(transparent)]
+    GixTreeEditor(#[from] gix::worktree::object::tree::editor::Error),
+    #[error(transparent)]
+    GixTreeEditorWrite(#[from] gix::object::tree::editor::write::Error),
     #[error(transparent)]
     GixHeadCommit(#[from] gix::reference::head_commit::Error),
     #[error(transparent)]

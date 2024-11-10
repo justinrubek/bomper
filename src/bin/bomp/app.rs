@@ -55,8 +55,7 @@ impl App {
         let mut file_changes = determine_changes(&self.config, &replacement)?;
         file_changes.push(apply_changelog(&changelog_entry)?);
         if let Some(changes) = apply_changes(file_changes, opts.dry_run)? {
-            let new_tree = prepare_commit(&repo, &changes)?;
-            let object_id = repo.write_object(&new_tree)?;
+            let object_id = prepare_commit(&repo, &changes)?;
             let commit = repo.commit(
                 "HEAD",
                 format!("chore(version): {}", new_tag.version),
@@ -233,67 +232,16 @@ fn apply_changelog(entry: &str) -> Result<file::Replacer> {
     Ok(file::Replacer { path, temp_file })
 }
 
-fn prepare_commit(
-    repo: &gix::Repository,
-    changes: &[PathBuf],
-) -> Result<gix::worktree::object::Tree> {
+fn prepare_commit(repo: &gix::Repository, changes: &[PathBuf]) -> Result<gix::ObjectId> {
     let head = repo.head_commit()?;
-    let tree: gix::worktree::object::Tree = head.tree()?.decode()?.into();
-    let new_tree = rewrite_tree(repo, &tree.clone(), &changes.to_vec(), &mut PathBuf::new())?;
-    Ok(new_tree)
-}
-
-/// Creates a modified git tree with the provided path's entries changed to match their new
-/// contents.
-///
-/// TODO: remove this once `gix` supports a better way to create changes
-fn rewrite_tree(
-    repo: &gix::Repository,
-    tree: &gix::worktree::object::Tree,
-    changes: &Vec<PathBuf>,
-    tree_path: &mut PathBuf,
-) -> Result<gix::worktree::object::Tree> {
-    let mut new_entries = vec![];
-
-    for entry in &tree.entries {
-        let object: gix::Object = repo.find_object(entry.oid)?;
-        match &object.kind {
-            gix::object::Kind::Tree => {
-                let old_tree = object.clone().into_tree().decode()?.into();
-                tree_path.push(entry.filename.to_string());
-                let new_tree = rewrite_tree(repo, &old_tree, changes, tree_path)?;
-                tree_path.pop();
-                let new_id = repo.write_object(&new_tree)?;
-
-                new_entries.push(gix::worktree::object::tree::Entry {
-                    filename: entry.filename.clone(),
-                    mode: entry.mode,
-                    oid: new_id.into(),
-                });
-            }
-            gix::object::Kind::Blob => {
-                let file_name = entry.filename.clone().to_string();
-                let file_path = tree_path.join(file_name);
-                if let Some(new_path) = changes.iter().find(|p| **p == file_path) {
-                    println!("replacing {new_path:?}");
-                    let new_id = repo.write_blob_stream(std::fs::File::open(new_path)?)?;
-
-                    new_entries.push(gix::worktree::object::tree::Entry {
-                        filename: entry.filename.clone(),
-                        mode: entry.mode,
-                        oid: new_id.into(),
-                    });
-                } else {
-                    new_entries.push(entry.clone());
-                }
-            }
-            _ => unreachable!(),
-        }
+    let mut editor = repo.edit_tree(head.id)?;
+    for file_path in changes {
+        let gix_path = file_path.to_str().unwrap();
+        let new_id = repo.write_blob_stream(std::fs::File::open(file_path)?)?;
+        editor.upsert(gix_path, gix::object::tree::EntryKind::Blob, new_id)?;
     }
-
-    Ok(gix::worktree::object::Tree {
-        entries: new_entries,
-    })
+    let new_tree = editor.write()?;
+    Ok(new_tree.detach())
 }
 
 fn print_diff(original: &str, new: &str, context: String) {

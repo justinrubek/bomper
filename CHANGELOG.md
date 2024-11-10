@@ -2,6 +2,75 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+
+## [0.8.0](https://github.com/justinrubek/bomper/releases/tag/0.8.0) - 2024-11-10
+
+This update introduces support for bomper to generate its own changelog files. The primary use case for bomper is no longer to be hooked into by cocogitto, but instead for bomper to manage the file itself. The original functionality is still provided, however the command line arguments have been changed. The `raw-bump` subcommand contains the previous behavior.
+
+### bug fixes
+- **(clippy)** pedantic warnings - ([0f8d395](https://github.com/justinrubek/bomper/commit/0f8d3958775ee766354278ab462f685947d1cb82)) - [@justinrubek](https://github.com/justinrubek)
+- commits when multiple files share the same name - ([30b55aa](https://github.com/justinrubek/bomper/commit/30b55aa1e7e1dc00b70e5afd410e65b8fb6ac392)) - [@justinrubek](https://github.com/justinrubek)
+- strip `.git` suffix from repo path - ([2ec393c](https://github.com/justinrubek/bomper/commit/2ec393cdfff04cf270d5bf5577dae586bf01e32d)) - [@justinrubek](https://github.com/justinrubek)
+- properly reset semver values when bumping - ([594d039](https://github.com/justinrubek/bomper/commit/594d03909044bdbff2848a18d7cafd17ec3438fb)) - [@justinrubek](https://github.com/justinrubek)
+- apply file replacements when file doesn't already exist - ([3a7ca45](https://github.com/justinrubek/bomper/commit/3a7ca45ae0afb3ab78d84a3858a505eea55543cb)) - [@justinrubek](https://github.com/justinrubek)
+- attempt to always run from base directory of project - ([a64418f](https://github.com/justinrubek/bomper/commit/a64418fda7c4f52bf820ee9b3bc985716dc73a26)) - [@justinrubek](https://github.com/justinrubek)
+- strip prefix from `Cargo.toml` entries - ([e3786d2](https://github.com/justinrubek/bomper/commit/e3786d2d4cb3b3b317edfaeb4469877d76cedbc1)) - [@justinrubek](https://github.com/justinrubek)
+
+### build system
+- **(cargo)** cargo update - ([34c75ea](https://github.com/justinrubek/bomper/commit/34c75ea10b69dfc7dd09380c6ccc626db55008a1)) - [@justinrubek](https://github.com/justinrubek)
+- **(nix)** nix flake update - ([61a80b4](https://github.com/justinrubek/bomper/commit/61a80b4c1dd976df3f1a5da88941431fc4b763e5)) - [@justinrubek](https://github.com/justinrubek)
+- **(nix)** rename `cli` package to `bomp` - ([4daddfc](https://github.com/justinrubek/bomper/commit/4daddfccdba158486a1098b6b54b4cc6c23f2cdf)) - [@justinrubek](https://github.com/justinrubek)
+- **(cargo)** cargo update - ([b356f99](https://github.com/justinrubek/bomper/commit/b356f99de78b33300a991e79157f057fd7e631fc)) - [@justinrubek](https://github.com/justinrubek)
+- **(cargo)** configure tracing - ([34b0deb](https://github.com/justinrubek/bomper/commit/34b0deb6b1adac807418588a56d249fb8a7da7af)) - [@justinrubek](https://github.com/justinrubek)
+
+### chores
+- **(flake-module)** clean nix code - ([103ee54](https://github.com/justinrubek/bomper/commit/103ee540311d608103828a88125bfefb666217e8)) - [@justinrubek](https://github.com/justinrubek)
+- **(bomper)** add `authors` to configuration - ([9e8110c](https://github.com/justinrubek/bomper/commit/9e8110c17efc8820fa4ceb50710df14bf20a3410)) - [@justinrubek](https://github.com/justinrubek)
+
+### continuous integration
+- **(github/actions)** automatic flake update - ([11cef92](https://github.com/justinrubek/bomper/commit/11cef925f8d1a4c1d75af6adc7299676976fda59)) - [@justinrubek](https://github.com/justinrubek)
+- **(github/actions)** simply tag logic - ([ff4ab7e](https://github.com/justinrubek/bomper/commit/ff4ab7e4515c203d5131d96d72d5955e2d13b4e6)) - [@justinrubek](https://github.com/justinrubek)
+- **(pre-commit)** add statix hook - ([f5640ac](https://github.com/justinrubek/bomper/commit/f5640acb42452bceb93be8e8d49f3bb75b8f5ed0)) - [@justinrubek](https://github.com/justinrubek)
+- **(github/actions)** replace cocogitto with bomper - ([c322382](https://github.com/justinrubek/bomper/commit/c3223826e3d1d9e5d3fad60c72c41cc1dcd7cfc6)) - [@justinrubek](https://github.com/justinrubek)
+
+### documentation
+- **(readme)** more specific help command example - ([56547f1](https://github.com/justinrubek/bomper/commit/56547f123a9803063c0dcccec19d0c64d6a7ed42)) - [@justinrubek](https://github.com/justinrubek)
+- **(readme)** revamp with up-to-date information - ([728e838](https://github.com/justinrubek/bomper/commit/728e8383b4730519392874ea49a8c401a92469b9)) - [@justinrubek](https://github.com/justinrubek)
+- **(examples)** author configuration - ([b64840a](https://github.com/justinrubek/bomper/commit/b64840aa6e2c490b820dd93bb9272695b90d32b4)) - [@justinrubek](https://github.com/justinrubek)
+- **(readme)** add readme badges - ([de14dad](https://github.com/justinrubek/bomper/commit/de14dad1c67611bc4374a926efeadf2e499de2a4)) - [@justinrubek](https://github.com/justinrubek)
+- **(readme)** update with flake module information - ([9fe9222](https://github.com/justinrubek/bomper/commit/9fe9222ea1ea706008b6cfa9b58c40842a14c9ce)) - [@justinrubek](https://github.com/justinrubek)
+
+### features
+- **(changelog)** display version creation date - ([dadf5fd](https://github.com/justinrubek/bomper/commit/dadf5fdb3dee2f85f334b69e1b4a11654576c440)) - [@justinrubek](https://github.com/justinrubek)
+- support repos with no existing tags - ([350d9a4](https://github.com/justinrubek/bomper/commit/350d9a4e0d22be1b9f3f5a54a3b044350f803483)) - [@justinrubek](https://github.com/justinrubek)
+- **(cli)** add `repository` flag - ([45b6865](https://github.com/justinrubek/bomper/commit/45b6865fbb47e8c4b95ff68d7310d2e173195ca7)) - [@justinrubek](https://github.com/justinrubek)
+- support prefixed `v` character in tags - ([db58500](https://github.com/justinrubek/bomper/commit/db585007d1a3c029dd13f852d49e0f04a4794f42)) - [@justinrubek](https://github.com/justinrubek)
+- **(changelog)** link to commit and commit author profile - ([3bb823b](https://github.com/justinrubek/bomper/commit/3bb823b70fab46d54d45ca0d2fe2530442f4d738)) - [@justinrubek](https://github.com/justinrubek)
+- **(changelog)** link version to github release - ([581ff8e](https://github.com/justinrubek/bomper/commit/581ff8ecbbe02737e97edca65f2b2508c798f4a2)) - [@justinrubek](https://github.com/justinrubek)
+- **(changelog)** render commit scope - ([786378b](https://github.com/justinrubek/bomper/commit/786378bde852b702d7b1dfd0b93f755cd9fa763c)) - [@justinrubek](https://github.com/justinrubek)
+- **(cli/bump)** `description` flag - ([f53b1e7](https://github.com/justinrubek/bomper/commit/f53b1e78f149f40e109f71fed427cf8606117872)) - [@justinrubek](https://github.com/justinrubek)
+- **(cli/changelog)** add `at` flag - ([45dd987](https://github.com/justinrubek/bomper/commit/45dd987903eefcb0deb15a618f64904b773411da)) - [@justinrubek](https://github.com/justinrubek)
+- **(cli)** `changelog` subcommand - ([2488a02](https://github.com/justinrubek/bomper/commit/2488a02ff22a0595fe9675fdb44bfb8991f70a4e)) - [@justinrubek](https://github.com/justinrubek)
+- **(cli/bump)** tag bump commits - ([9de5056](https://github.com/justinrubek/bomper/commit/9de50564005ea88fa1ce74cc4c6658154c15a0f7)) - [@justinrubek](https://github.com/justinrubek)
+- **(cli/bump)** commit changes - ([771772f](https://github.com/justinrubek/bomper/commit/771772f9351290660ad02a14ae1732ca8204c83b)) - [@justinrubek](https://github.com/justinrubek)
+- **(cli)** display diff during dry-run - ([247522d](https://github.com/justinrubek/bomper/commit/247522d90090469dc054ba77d5fac8b3387f5d6c)) - [@justinrubek](https://github.com/justinrubek)
+- **(cli/bump)** persist changes to disk - ([6e20c30](https://github.com/justinrubek/bomper/commit/6e20c308ed1537e67bc50f19c7f7f8ad96ade2ae)) - [@justinrubek](https://github.com/justinrubek)
+- construct changelog entry from commits - ([17c8082](https://github.com/justinrubek/bomper/commit/17c808216e6146e2f6553fc1812b4ef51d3ca84e)) - [@justinrubek](https://github.com/justinrubek)
+- determine semver increment automatically from conventional commits - ([abc97f4](https://github.com/justinrubek/bomper/commit/abc97f457a1916d7104b8d183c6bfe51e0e0c43f)) - [@justinrubek](https://github.com/justinrubek)
+- determine commits from HEAD to latest tag - ([b843915](https://github.com/justinrubek/bomper/commit/b84391514f55c4d6db84592fffe61d7b8f4fbc66)) - [@justinrubek](https://github.com/justinrubek)
+- determine semver version increments - ([1d16393](https://github.com/justinrubek/bomper/commit/1d16393d0702a66974c37fb0a6ad5fa848f57692)) - [@justinrubek](https://github.com/justinrubek)
+- determine latest git tag using semver - ([6923be3](https://github.com/justinrubek/bomper/commit/6923be3a6cd1685d15afc71eeaca8bb1a66401a1)) - [@justinrubek](https://github.com/justinrubek)
+
+### refactors
+- **(cli)** move `dry-run` flag to individual sub-commands - ([ca04c78](https://github.com/justinrubek/bomper/commit/ca04c78e8a1196adc20ff0ef215c8e6e3a4d05c4)) - [@justinrubek](https://github.com/justinrubek)
+- **(cli)** rename package to `bomp` - ([1c3adc0](https://github.com/justinrubek/bomper/commit/1c3adc03075b223ce1293124bf2675c711c29655)) - [@justinrubek](https://github.com/justinrubek)
+- **(cli/changelog)** use `unreleased` when showing un-comitted changes - ([ab09a65](https://github.com/justinrubek/bomper/commit/ab09a65e04090c9a53dcfc664cef540a288dd09a)) - [@justinrubek](https://github.com/justinrubek)
+- **(cli)** organize commands using subcommands - ([6bc27e9](https://github.com/justinrubek/bomper/commit/6bc27e9c7f572c861b84409ce102676605d57c38)) - [@justinrubek](https://github.com/justinrubek)
+
+### style
+- display solid line for diffs - ([35937a4](https://github.com/justinrubek/bomper/commit/35937a4e6b5d23b78304b38287a1e6808168344e)) - [@justinrubek](https://github.com/justinrubek)
+
+- - -
 ## [0.7.0](https://github.com/justinrubek/bomper/compare/79b339cfaaf942dda80ce885a416600ed9ac0d67..0.7.0) - 2024-05-04
 #### Build system
 - **(cargo)** cargo update - ([8591230](https://github.com/justinrubek/bomper/commit/85912309c80b07606d2847410b478422675837de)) - [@justinrubek](https://github.com/justinrubek)

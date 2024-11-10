@@ -174,7 +174,7 @@ dependencies = [
 
 [[package]]
 name = "bomper"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "cargo-lock",

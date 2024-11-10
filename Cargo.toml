@@ -10,7 +10,7 @@ repository = "https://github.com/justinrubek/bomper"
 
 [dependencies]
 anyhow = "1.0.59"
-cargo-lock = "9"
+cargo-lock = "10"
 cargo_metadata = "0.18"
 cargo_toml = "0.20"
 chrono = "0.4.38"

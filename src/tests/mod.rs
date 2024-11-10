@@ -173,8 +173,8 @@ package3 = "0.1.0"
 
         let expected_toml = r#"[package]
 name = "package1"
-edition = "2018"
 version = "0.2.0"
+edition = "2018"
 
 [dependencies]
 package2 = "0.1.0"

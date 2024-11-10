@@ -68,7 +68,7 @@ pub fn generate_changelog_entry<
     commits: I,
     version: &str,
     description: Option<String>,
-    authors: &Option<HashMap<String, String, S>>,
+    authors: Option<&HashMap<String, String, S>>,
 ) -> Result<String> {
     let mut env = minijinja::Environment::new();
     env.add_template("changelog_entry", TEMPLATE)?;
@@ -84,7 +84,7 @@ pub fn generate_changelog_entry<
         commits.into_iter().fold(HashMap::new(), |mut acc, commit| {
             let key = display_commit_type(&commit.conventional_commit.commit_type);
             let entry = acc.entry(key).or_default();
-            let author = author_name(commit.signature.name.to_string(), authors, &url);
+            let author = author_name(commit.signature.name.to_string(), authors, url.as_ref());
             let commit_id = commit.commit_id.to_string();
             let hash = match &url {
                 Some((host, path)) => format!(
@@ -149,8 +149,8 @@ fn remove_suffix<'a>(input: &'a str, suffix: &str) -> &'a str {
 
 fn author_name<S: ::std::hash::BuildHasher>(
     commit_author: String,
-    authors: &Option<HashMap<String, String, S>>,
-    url: &Option<(String, String)>,
+    authors: Option<&HashMap<String, String, S>>,
+    url: Option<&(String, String)>,
 ) -> String {
     match url {
         Some((host, _)) => {

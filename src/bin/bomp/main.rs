@@ -31,25 +31,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let config_path = match &args.base_args.config_file {
-        Some(path) => path.to_owned(),
-        None => {
-            let config_path = match project.config_home {
-                Some(dir) => {
-                    let config_path = dir.join("bomp.ron");
-                    if config_path.exists() {
-                        config_path
-                    } else {
-                        PathBuf::from("bomp.ron")
-                    }
+    let config_path = if let Some(path) = &args.base_args.config_file {
+        path.to_owned()
+    } else {
+        let config_path = match project.config_home {
+            Some(dir) => {
+                let config_path = dir.join("bomp.ron");
+                if config_path.exists() {
+                    config_path
+                } else {
+                    PathBuf::from("bomp.ron")
                 }
-                None => PathBuf::from("bomp.ron"),
-            };
-            if !config_path.exists() {
-                return Err("No configuration file found".into());
             }
-            config_path.clone()
+            None => PathBuf::from("bomp.ron"),
+        };
+        if !config_path.exists() {
+            return Err("No configuration file found".into());
         }
+        config_path.clone()
     };
     let config_path = config_path.canonicalize()?;
     tracing::debug!(?config_path);

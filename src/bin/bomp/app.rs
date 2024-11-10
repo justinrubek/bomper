@@ -45,7 +45,7 @@ impl App {
             &commits,
             &new_version_string,
             version_description,
-            &self.config.authors,
+            self.config.authors.as_ref(),
         )?;
 
         let replacement = VersionReplacement {
@@ -71,51 +71,47 @@ impl App {
 
     pub fn changelog(&self, opts: &Changelog) -> Result<()> {
         let repo = gix::discover(".")?;
-        match &opts.at {
-            Some(version) => {
-                let mut tags = Tag::get_version_tags(&repo)?;
-                tags.sort();
-                tags.reverse();
-                let version_range = tags
-                    .windows(2)
-                    .find(|tags| {
-                        let [first, _] = tags else { unreachable!() };
-                        first.version.eq(version)
-                    })
-                    .ok_or_else(|| Error::VersionNotFound(version.clone()))?;
-                let commits =
-                    get_commits_between_tags(&repo, &version_range[1], &version_range[0])?;
-                let changelog_entry = generate_changelog_entry(
-                    &repo,
-                    &commits,
-                    &version.to_string(),
-                    None,
-                    &self.config.authors,
-                )?;
-                println!("{changelog_entry}");
-            }
-            None => {
-                let (_, commits) = changelog_commits(&repo)?;
-                let changelog_entry = generate_changelog_entry(
-                    &repo,
-                    &commits,
-                    "unreleased",
-                    None,
-                    &self.config.authors,
-                )?;
-                let path = std::path::PathBuf::from("CHANGELOG.md");
-                if opts.no_decorations {
-                    if opts.only_current_version {
-                        println!("{changelog_entry}");
-                    } else {
-                        let new_changelog = create_changelog(&path, &changelog_entry)?;
-                        println!("{new_changelog}");
-                    }
+        if let Some(version) = &opts.at {
+            let mut tags = Tag::get_version_tags(&repo)?;
+            tags.sort();
+            tags.reverse();
+            let version_range = tags
+                .windows(2)
+                .find(|tags| {
+                    let [first, _] = tags else { unreachable!() };
+                    first.version.eq(version)
+                })
+                .ok_or_else(|| Error::VersionNotFound(version.clone()))?;
+            let commits = get_commits_between_tags(&repo, &version_range[1], &version_range[0])?;
+            let changelog_entry = generate_changelog_entry(
+                &repo,
+                &commits,
+                &version.to_string(),
+                None,
+                self.config.authors.as_ref(),
+            )?;
+            println!("{changelog_entry}");
+        } else {
+            let (_, commits) = changelog_commits(&repo)?;
+            let changelog_entry = generate_changelog_entry(
+                &repo,
+                &commits,
+                "unreleased",
+                None,
+                self.config.authors.as_ref(),
+            )?;
+            let path = std::path::PathBuf::from("CHANGELOG.md");
+            if opts.no_decorations {
+                if opts.only_current_version {
+                    println!("{changelog_entry}");
                 } else {
-                    let old_changelog = std::fs::read_to_string(&path).unwrap_or_default();
                     let new_changelog = create_changelog(&path, &changelog_entry)?;
-                    print_diff(&old_changelog, &new_changelog, path.display().to_string());
+                    println!("{new_changelog}");
                 }
+            } else {
+                let old_changelog = std::fs::read_to_string(&path).unwrap_or_default();
+                let new_changelog = create_changelog(&path, &changelog_entry)?;
+                print_diff(&old_changelog, &new_changelog, path.display().to_string());
             }
         }
 
